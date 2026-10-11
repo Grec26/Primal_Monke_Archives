@@ -1,0 +1,14 @@
+{
+  "file": "PrimalMonke-Quest.apk",
+  "bytes": 84738037,
+  "sha256": "344d6320780b9319e31e6c86ccf9f4822c052b36af87c013b603723ce5f7d2b0",
+  "package": "com.grec26.primalmonke",
+  "version": "0.1.0",
+  "engine": "Godot 4.6.3",
+  "architecture": "arm64-v8a",
+  "min_sdk": 29,
+  "target_sdk": 32,
+  "signing": "Android debug (APK Signature Scheme v2)",
+  "headset_playtested": false,
+  "native_smoke_checks_passed": 13
+}

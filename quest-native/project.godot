@@ -1,0 +1,24 @@
+config_version=5
+
+[application]
+config/name="Primal Monke"
+run/main_scene="res://forest.tscn"
+config/features=PackedStringArray("4.6", "GL Compatibility")
+config/icon="res://icon.svg"
+
+[display]
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+
+[rendering]
+textures/vram_compression/import_etc2_astc=true
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/default_filters/use_nearest_mipmap_filter=false
+anti_aliasing/quality/msaa_3d=1
+
+[xr]
+openxr/enabled=true
+openxr/default_action_map="res://openxr_action_map.tres"
+shaders/enabled=true

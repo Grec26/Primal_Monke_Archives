@@ -1,5 +1,7 @@
 # Primal Monke — Forest Chase
 
+**Quest test APK:** [Download PrimalMonke-Quest.apk](https://github.com/Grec26/Primal_Monke_Archives/raw/refs/heads/main/apk/PrimalMonke-Quest.apk). This native Godot OpenXR port is built and signed; headset play remains untested. [Install and build details](apk/README.md).
+
 An original single-player Unity VR tag prototype inspired by arm-driven locomotion. Includes a climbable forest, five fleeing AI monkeys, and a 90-second round. No Gorilla Tag assets or code are used. Multiplayer is not implemented.
 
 A separate **WebXR browser version** is available in [`web/`](web/README.md). It supports headset controllers and an on-screen mode without modifying the Unity project.
