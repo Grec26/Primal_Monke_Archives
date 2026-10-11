@@ -300,6 +300,8 @@ func _intersect_panel(ray_origin: Vector3, ray_direction: Vector3) -> Dictionary
 		return {}
 	var button := -1
 	for index in range(_world_buttons.size()):
+		if not _world_buttons[index]["mesh"].visible:
+			continue
 		var bounds: Rect2 = _world_buttons[index]["rect"]
 		if bounds.has_point(point):
 			button = index
@@ -429,7 +431,17 @@ func _world_label(text: String, center: Vector2, font_size: int = 32) -> Label3D
 func _world_button(text: String, action: String, center: Vector2, size: Vector2, color: Color = NORMAL_COLOR) -> void:
 	var mesh := _world_box(center, size, 0.0, color)
 	var label := _world_label(text, center, 32)
-	_world_buttons.append({"action": action, "rect": Rect2(center - size * 0.5, size), "material": mesh.material_override, "label": label, "color": color})
+	_world_buttons.append({"action": action, "rect": Rect2(center - size * 0.5, size), "mesh": mesh, "material": mesh.material_override, "label": label, "color": color})
+
+func _set_world_action_visible(action: String, value: bool) -> void:
+	for index in range(_world_buttons.size()):
+		var button := _world_buttons[index]
+		if button["action"] != action:
+			continue
+		button["mesh"].visible = value
+		button["label"].visible = value
+		if not value and _hovered == index:
+			_hovered = -1
 
 func _create_world_menu() -> void:
 	_world_panel = Node3D.new()

@@ -516,6 +516,12 @@ func open_account_menu() -> void:
 func can_open_account_menu() -> bool:
 	return frontend_state != "loading"
 
+func open_developer_menu() -> void:
+	if can_open_developer_menu(): dev_menu.set_open(true)
+
+func can_open_developer_menu() -> bool:
+	return account_is_developer and frontend_state != "loading" and is_instance_valid(dev_menu)
+
 func on_account_menu_open() -> void:
 	_changing_frontend = true
 	_close_feature_menus()
@@ -575,6 +581,8 @@ func _account_changed() -> void:
 			dev_menu = null
 		developer_bots_frozen = false
 		diagnostics_enabled = false
+	if is_instance_valid(main_menu): main_menu.refresh_status()
+	if is_instance_valid(account_menu): account_menu.refresh_status()
 
 func developer_action_allowed(action: String) -> bool:
 	if not account_is_developer or frontend_state == "loading": return false

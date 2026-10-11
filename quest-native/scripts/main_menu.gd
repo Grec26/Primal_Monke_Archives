@@ -21,7 +21,7 @@ func _init() -> void:
 	toggle_key = KEY_F1
 	toggle_hand = 1
 	toggle_button = "by_button"
-	panel_size = Vector2(1.7, 2.18)
+	panel_size = Vector2(1.7, 2.34)
 	_status_text = "Choose how you want to play."
 
 func toggle() -> void:
@@ -56,6 +56,7 @@ func _action_enabled(action: String) -> bool:
 		"solo": return game.has_method("start_solo")
 		"multiplayer": return game.has_method("open_multiplayer_lobby")
 		"account": return game.has_method("open_account_menu")
+		"developer": return game.has_method("can_open_developer_menu") and game.has_method("open_developer_menu") and bool(game.call("can_open_developer_menu"))
 		"profile": return game.has_method("open_profile_menu")
 		"tutorial": return game.has_method("open_tutorial_menu")
 		"voice": return game.has_method("open_voice_menu")
@@ -71,6 +72,7 @@ func _dispatch(action: String) -> void:
 		"solo": game.call("start_solo")
 		"multiplayer": game.call("open_multiplayer_lobby")
 		"account": game.call("open_account_menu")
+		"developer": game.call("open_developer_menu")
 		"profile": game.call("open_profile_menu")
 		"tutorial": game.call("open_tutorial_menu")
 		"voice": game.call("open_voice_menu")
@@ -86,7 +88,8 @@ func refresh_status() -> void:
 	var mode_notice := _game_text("play_mode_notice", "")
 	if not mode_notice.is_empty():
 		status += "\n" + mode_notice
-	var snapshot := "%s|%s|%s|%s|%s|%s|%s|%s" % [status, _is_xr(), _action_enabled("resume"), _action_enabled("pcvr"), _action_enabled("desktop"), _game_text("account_status", "Signed out"), _game_text("frontend_state", "main_menu"), _game_text("profile_summary", "Monke · Level 1")]
+	var developer := bool(game.get("account_is_developer"))
+	var snapshot := "%s|%s|%s|%s|%s|%s|%s|%s|%s|%s" % [status, _is_xr(), _action_enabled("resume"), _action_enabled("pcvr"), _action_enabled("desktop"), _game_text("account_status", "Signed out"), _game_text("frontend_state", "main_menu"), _game_text("profile_summary", "Monke · Level 1"), developer, _action_enabled("developer")]
 	if snapshot == _state_snapshot:
 		return
 	_state_snapshot = snapshot
@@ -97,6 +100,9 @@ func refresh_status() -> void:
 		button.disabled = not _action_enabled(action)
 		if action == "resume":
 			button.visible = _action_enabled("resume")
+		elif action == "developer":
+			button.visible = developer
+	_set_world_action_visible("developer", developer)
 	_update_button_colors()
 
 func _mode_text() -> String:
@@ -176,6 +182,7 @@ func _create_desktop_menu() -> void:
 	_menu_button(_desktop_utilities, "Account", "account")
 	_menu_button(_desktop_utilities, "Tutorial", "tutorial")
 	_menu_button(_desktop_utilities, "Voice controls", "voice")
+	_menu_button(content, "Dev tools", "developer")
 	if OS.get_name() != "Android":
 		var mode_row := HBoxContainer.new()
 		mode_row.add_theme_constant_override("separation", 8)
@@ -238,7 +245,8 @@ func _create_world_menu() -> void:
 		_world_button("QUIT", "quit", Vector2(0, -0.715), Vector2(1.46, 0.1))
 	else:
 		_world_label("PC + Quest · same Wi-Fi", Vector2(0, -0.62), 27)
-	_world_label("Right aim + trigger to select\nRight B opens this menu during play", Vector2(0, -0.94), 23)
+	_world_button("DEV TOOLS", "developer", Vector2(0, -0.855), Vector2(1.46, 0.10), Color("946632"))
+	_world_label("Right aim + trigger to select\nRight B opens this menu during play", Vector2(0, -1.015), 23)
 	MenuTheme.world_text(_world_panel)
 	_pointer = MeshInstance3D.new()
 	var dot := SphereMesh.new()

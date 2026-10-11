@@ -1,15 +1,15 @@
 {
   "file": "PrimalMonke-Quest.apk",
-  "bytes": 88866985,
-  "sha256": "31fb5f027e2bc4ec3f90cf8a729efb5f2613635943d9b7dba76fe503dacee3da",
+  "bytes": 88868077,
+  "sha256": "dfcac7247b9dd8d39ae45e093fb906afbb8f9b64f86f5923ebee0bf29e2d311b",
   "resource_count": 79,
   "audio_resources_verified": 8,
   "required_feature_scripts_verified": 19,
   "archive_integrity_verified": true,
   "packaged_features_and_account_resources_verified": true,
   "excluded_tests_and_build_helpers_verified": true,
-  "version": "0.5.0",
-  "version_code": 6,
+  "version": "0.5.1",
+  "version_code": 7,
   "package": "com.grec26.primalmonke",
   "min_sdk": 29,
   "target_sdk": 32,
@@ -22,38 +22,6 @@
   "engine": "Godot 4.6.3",
   "signing": "Android debug (APK Signature Scheme v2)",
   "exported_resources_linux_headless_check_passed": true,
-  "packaged_game_checks_passed": {
-    "smoke_check": 16,
-    "features_check": 50,
-    "error_codes_check": 57,
-    "registration_ui_check": 80,
-    "voice_check": 76,
-    "tutorial_sound_check": 64,
-    "profile_check": 94,
-    "developer_access_check": 289,
-    "frontend_check": 49,
-    "tag_mode_check": 40
-  },
-  "packaged_game_checks_total": 815,
-  "crossplay_integration": {
-    "passed": true,
-    "peers": 3,
-    "mixed_desktop_vr_poses": true,
-    "transport": "ENet UDP",
-    "protocol": 2,
-    "assertions_passed": 129
-  },
-  "player_tag_integration": {
-    "passed": true,
-    "peers": 3,
-    "assertions_passed": 116
-  },
-  "voice_integration": {
-    "passed": true,
-    "peers": 3,
-    "synthetic_audio_only": true,
-    "assertions_passed": 29
-  },
   "playfab_title_id": "1A7D9B",
   "registration_enabled": true,
   "credential_sign_in_enabled": true,
@@ -63,7 +31,6 @@
   "returning_guest_remains_offline": true,
   "passwords_saved_by_game": false,
   "developer_access": "Verified PlayFab account ID in title-owned PrimalMonkeDeveloperIds JSON list",
-  "live_playfab_noncreating_transport_probe_passed": true,
   "live_registration_verified": false,
   "live_signin_verified": false,
   "live_profile_cloud_write_verified": false,
@@ -80,15 +47,86 @@
   "staged_multiplayer_lobby_enabled": true,
   "host_starts_multiplayer_round": true,
   "custom_icon_packaged_verified": true,
-  "source_desktop_menu_render_checks_passed": true,
-  "source_desktop_menu_render_widths": [
-    1280,
-    960,
-    520
-  ],
-  "source_world_panels_simulated_check_passed": true,
   "headset_playtested": false,
   "windows_playtested": false,
   "microphone_hardware_tested": false,
-  "quest_picture_picker_hardware_tested": false
+  "quest_picture_picker_hardware_tested": false,
+  "previous_release_validation": {
+    "version": "0.5.0",
+    "commit": "e3af5ccdf454c4248361c4047c4c63937bbb652d",
+    "packaged_game_checks_passed": {
+      "smoke_check": 16,
+      "features_check": 50,
+      "error_codes_check": 57,
+      "registration_ui_check": 80,
+      "voice_check": 76,
+      "tutorial_sound_check": 64,
+      "profile_check": 94,
+      "developer_access_check": 289,
+      "frontend_check": 49,
+      "tag_mode_check": 40
+    },
+    "packaged_game_checks_total": 815,
+    "crossplay_integration": {
+      "passed": true,
+      "peers": 3,
+      "mixed_desktop_vr_poses": true,
+      "transport": "ENet UDP",
+      "protocol": 2,
+      "assertions_passed": 129
+    },
+    "player_tag_integration": {
+      "passed": true,
+      "peers": 3,
+      "assertions_passed": 116
+    },
+    "voice_integration": {
+      "passed": true,
+      "peers": 3,
+      "synthetic_audio_only": true,
+      "assertions_passed": 29
+    },
+    "live_playfab_noncreating_transport_probe_passed": true,
+    "source_desktop_menu_render_checks_passed": true,
+    "source_desktop_menu_render_widths": [
+      1280,
+      960,
+      520
+    ],
+    "source_world_panels_simulated_check_passed": true
+  },
+  "zipalign_16kb_verified": true,
+  "arm64_libraries": [
+    "lib/arm64-v8a/libc++_shared.so",
+    "lib/arm64-v8a/libgodot_android.so",
+    "lib/arm64-v8a/libopenxr_loader.so"
+  ],
+  "packaged_game_checks_passed": {
+    "smoke_check": 16,
+    "features_check": 50,
+    "registration_ui_check": 80,
+    "developer_access_check": 289,
+    "frontend_check": 49,
+    "developer_button_check": 116
+  },
+  "packaged_game_checks_total": 600,
+  "developer_buttons_enabled": true,
+  "developer_button_menus": [
+    "main",
+    "account"
+  ],
+  "developer_only_desktop_and_simulated_vr_buttons_verified": true,
+  "hidden_developer_buttons_not_targetable_by_vr_ray_verified": true,
+  "developer_button_revocation_expiry_logout_and_loading_guards_verified": true,
+  "source_graphical_developer_button_qa_passed": true,
+  "source_graphical_developer_button_qa_menus": [
+    "main",
+    "account"
+  ],
+  "source_graphical_developer_button_qa_widths": [
+    1280,
+    520
+  ],
+  "source_graphical_developer_button_qa_assertions_passed": 15,
+  "source_simulated_vr_developer_button_qa_passed": true
 }

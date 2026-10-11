@@ -47,7 +47,7 @@ pm_write_launcher() {
 pm_write_launcher Play-Desktop.bat off desktop
 pm_write_launcher Play-PCVR.bat on pcvr
 cat > "$pm_output_dir/README.txt" <<'README'
-Primal Monke 0.5.0 for Windows
+Primal Monke 0.5.1 for Windows
 
 Extract all four files from the ZIP into the same folder before playing.
 Play-Desktop.bat: keyboard and mouse play.
@@ -96,7 +96,7 @@ Your name, picture, and level are public to room players. Guest progress stays
 local; signed-in accounts can sync public PlayFab profiles. Failed cloud sync
 retains local progress; use Retry sync. XP grants no developer privileges.
 
-To play with Quest, install the matching 0.5.0 APK and use the same local network.
+To play with Quest, install the matching 0.5.1 APK and use the same local network.
 Choose Multiplayer lobby; Host on one device, then enter its IPv4 address and
 Join on the others. Up to eight players share a room using UDP 7777.
 The host selects Co-op chase or Player Tag, then Start match. Gameplay/timer
@@ -112,6 +112,7 @@ Leaving a room or disabling voice stops capture/playback and mutes the mic.
 
 Developer tools require the owner's verified PlayFab ID approval. After your
 ID is added to the title-owned list, choose Refresh access in Account.
+Dev tools appears in Main and Account after verification; F2 / left Y also works.
 No IDs are granted by this build. Names, PFPs, and XP cannot grant access.
 
 Windows/Quest hardware, real microphone/speaker output, performance, and

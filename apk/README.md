@@ -2,7 +2,7 @@
 
 [Download PrimalMonke-Quest.apk](https://github.com/Grec26/Primal_Monke_Archives/raw/refs/heads/main/apk/PrimalMonke-Quest.apk)
 
-Native Godot OpenXR **0.5.0** test build for an ARM64 Quest headset, with arm-driven movement, updated menus/loading screens, a climbable forest/treehouse, original audio, and eight-player crossplay with the matching [Windows/PC VR build](../pc/README.md). Choose Co-op chase against five AI monkeys or multiplayer Player Tag. Profiles add public names/PFPs and cosmetic levels; tutorials and opt-in voice are available from the main menu. Unity 2021.3.21f1 and WebXR remain separate single-player projects.
+Native Godot OpenXR **0.5.1** test build for an ARM64 Quest headset, with arm-driven movement, updated menus/loading screens, a climbable forest/treehouse, original audio, and eight-player crossplay with the matching [Windows/PC VR build](../pc/README.md). Choose Co-op chase against five AI monkeys or multiplayer Player Tag. Profiles add public names/PFPs and cosmetic levels; tutorials and opt-in voice are available from the main menu. Unity 2021.3.21f1 and WebXR remain separate single-player projects.
 
 ## Install and play
 
@@ -28,7 +28,7 @@ Open **Voice** from the main menu. Voice starts **off** and the microphone start
 
 **Profile** changes your public name/PFP and shows cosmetic XP/levels. PNG/JPEG uploads are limited to **4 MiB** and **4096 × 4096**, then cropped to a small square PNG. Quest uses its system file picker; if unavailable, upload on PC and sign into the same account to sync. The picker remains untested on hardware. Names, pictures, and levels are public to room players; signed-in profiles use public PlayFab User Data, with local progress retained when cloud sync fails. [Profile details](../quest-native/README.md#profiles-and-levels).
 
-Only selected verified IDs in `PrimalMonkeDeveloperIds` get the **left Y** developer menu. No IDs have been granted by this update; the title owner configures them through PlayFab. [Developer setup](../quest-native/README.md#developer-access).
+Only selected verified IDs in `PrimalMonkeDeveloperIds` see **Dev tools** in Main and Account; **left Y** also opens the menu. No IDs have been granted by this update; the title owner configures them through PlayFab. [Developer setup](../quest-native/README.md#developer-access).
 
 ## Verification
 

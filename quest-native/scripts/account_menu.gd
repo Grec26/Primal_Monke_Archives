@@ -106,7 +106,7 @@ func refresh_status() -> void:
 	if not configured:
 		status = "Account sign-in has not been configured."
 	var account_id := _game_text("account_id", "Not signed in")
-	var snapshot := "%s|%s|%s|%s|%s|%s|%s|%s|%s|%s" % [status, account_id, configured, signed_in, busy, developer, has_credentials, _submission_action, first_time, _game_text("account_error_code", "")]
+	var snapshot := "%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s" % [status, account_id, configured, signed_in, busy, developer, has_credentials, _submission_action, first_time, _game_text("account_error_code", ""), _action_enabled("developer")]
 	if snapshot == _state_snapshot:
 		return
 	_state_snapshot = snapshot
@@ -142,6 +142,8 @@ func _action_enabled(action: String) -> bool:
 			return signed_in and not busy
 		"logout":
 			return signed_in or busy
+		"developer":
+			return is_instance_valid(game) and game.has_method("can_open_developer_menu") and bool(game.call("can_open_developer_menu"))
 		"close":
 			return true
 	return not busy
@@ -220,6 +222,9 @@ func _dispatch(action: String) -> void:
 			_set_field("password", "")
 			if game.has_method("account_logout"):
 				game.call("account_logout")
+		"developer":
+			if game.has_method("open_developer_menu"):
+				game.call("open_developer_menu")
 	refresh_status()
 
 func _field_value(field: String) -> String:
@@ -262,8 +267,11 @@ func _refresh_controls() -> void:
 	for action in _desktop_buttons:
 		var button: Button = _desktop_buttons[action]
 		button.disabled = not _action_enabled(action)
+		if action == "developer":
+			button.visible = _account_bool("account_is_developer")
 		if action.begins_with("mode:"):
 			button.set_pressed_no_signal(action == "mode:" + _submission_action)
+	_set_world_action_visible("developer", _account_bool("account_is_developer"))
 	_update_button_colors()
 
 func _role_text() -> String:
@@ -435,6 +443,7 @@ func _create_desktop_menu() -> void:
 	MenuTheme.button(self, second_row, "Device account", "device", false, true)
 	MenuTheme.button(self, second_row, "Refresh access", "refresh", false, true)
 	MenuTheme.button(self, second_row, "Sign out", "logout", false, true)
+	MenuTheme.button(self, content, "Dev tools", "developer")
 	var close_row := HBoxContainer.new()
 	content.add_child(close_row)
 	MenuTheme.button(self, close_row, "Back", "close", false, true)
@@ -466,10 +475,10 @@ func _create_world_menu() -> void:
 	_world_buttons.back()["label"].font_size = 25
 	_world_button("SIGN IN", "mode:login", Vector2(0, 0.055), Vector2(0.60, 0.11))
 	_world_button("REGISTER", "submit", Vector2(0.65, 0.055), Vector2(0.60, 0.11), Color("386d4b"))
-	var secondary := [["DEVICE", "device"], ["REFRESH", "refresh"], ["SIGN OUT", "logout"], ["CLOSE", "close"]]
+	var secondary := [["DEVICE", "device"], ["REFRESH", "refresh"], ["SIGN OUT", "logout"], ["DEV TOOLS", "developer"], ["CLOSE", "close"]]
 	for index in range(secondary.size()):
-		_world_button(secondary[index][0], secondary[index][1], Vector2(-0.765 + index * 0.51, -0.105), Vector2(0.46, 0.11))
-		_world_buttons.back()["label"].font_size = 27
+		_world_button(secondary[index][0], secondary[index][1], Vector2(-0.8 + index * 0.4, -0.105), Vector2(0.36, 0.11))
+		_world_buttons.back()["label"].font_size = 23
 	for index in range(50):
 		var row := index / 10
 		var column := index % 10

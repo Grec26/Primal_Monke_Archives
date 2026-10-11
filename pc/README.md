@@ -4,7 +4,7 @@
 
 ## Start playing
 
-Version **0.5.0** adds updated menus, first-run registration, support error codes, picture uploads/PFPs, cosmetic levels, Player Tag, optional voice, tutorials, original audio, and a climbable treehouse. Startup loads the forest, then offers **Create account** or **Continue as guest** on first launch. The main menu opens **Play solo**, **Multiplayer lobby**, **Account**, **Profile**, **Tutorial**, and **Voice**. **Resume game** continues an existing round without resetting it.
+Version **0.5.1** adds updated menus, first-run registration, support error codes, picture uploads/PFPs, cosmetic levels, Player Tag, optional voice, tutorials, original audio, and a climbable treehouse. Startup loads the forest, then offers **Create account** or **Continue as guest** on first launch. The main menu opens **Play solo**, **Multiplayer lobby**, **Account**, **Profile**, **Tutorial**, and **Voice**. **Resume game** continues an existing round without resetting it.
 
 Press **F1** for the main menu. **Tab** on desktop or right **B** in VR opens the main menu offline and the room menu online. In a waiting room, movement, tags, and the timer remain paused until the host chooses **Start match**.
 
@@ -46,11 +46,11 @@ Open **Profile / F5** to change your public name, upload/reset a PFP, view XP/le
 
 XP is cosmetic and managed by the client. Co-op awards 10 XP per shared bot tag and 25 XP for finishing all five; Player Tag awards 20 XP per accepted player tag and 15 XP for finishing without being IT. XP grants no developer permissions. [Profile details](../quest-native/README.md#profiles-and-levels).
 
-The owner approves selected PlayFab IDs through title **1A7D9B**'s `PrimalMonkeDeveloperIds` list. After approval, choose **Refresh access** in Account, then open **F2 / left Y**. No IDs are granted by this update. [Developer access setup](../quest-native/README.md#developer-access).
+The owner approves selected PlayFab IDs through title **1A7D9B**'s `PrimalMonkeDeveloperIds` list. After approval, choose **Refresh access** in Account, then select **Dev tools** in Main or Account, or press **F2 / left Y**. No IDs are granted by this update. [Developer access setup](../quest-native/README.md#developer-access).
 
 ## Play with Quest
 
-Use the matching **0.5.0** [Quest APK](../apk/README.md). Unity 2021.3.21f1 and WebXR remain separate single-player projects.
+Use the matching **0.5.1** [Quest APK](../apk/README.md). Unity 2021.3.21f1 and WebXR remain separate single-player projects.
 
 1. Connect PC and Quest to the same local network, then choose **Multiplayer lobby**.
 2. One device chooses **Host** and shares the local IPv4 address shown in its lobby. Other players enter it and choose **Join**.

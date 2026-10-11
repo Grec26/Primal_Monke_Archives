@@ -276,7 +276,7 @@ func test_vr_controls(game: Node, menu: Node, account: MockAccount) -> void:
 			no_overlap = no_overlap and not rect.intersects(menu._world_buttons[other].rect)
 		var center := rect.get_center()
 		var hit: Dictionary = menu._intersect_panel(menu._world_panel.to_global(Vector3(center.x, center.y, 1)), -menu._world_panel.global_basis.z)
-		bounds_ok = bounds_ok and hit.get("button", -1) == index
+		bounds_ok = bounds_ok and hit.get("button", -1) == (index if button.mesh.visible else -1)
 		actions.append(button.action)
 	check(bounds_ok and no_overlap, "VR controls stay inside the original panel with distinct controller-ray targets")
 	check(actions.has("mode:register") and actions.has("mode:login") and actions.has("submit") and actions.has("device") and actions.has("logout") and actions.has("close"), "VR exposes both account modes, selected submit, device account, sign-out and close")
@@ -352,7 +352,7 @@ func test_polished_menu_routes() -> void:
 			var rect: Rect2 = menu._world_buttons[index].rect
 			var center := rect.get_center()
 			var hit: Dictionary = menu._intersect_panel(menu._world_panel.to_global(Vector3(center.x, center.y, 1)), -menu._world_panel.global_basis.z)
-			targets_ok = targets_ok and bounds.encloses(rect) and hit.get("button", -1) == index
+			targets_ok = targets_ok and bounds.encloses(rect) and hit.get("button", -1) == (index if menu._world_buttons[index].mesh.visible else -1)
 			for other in range(index): targets_ok = targets_ok and not rect.intersects(menu._world_buttons[other].rect)
 		check(targets_ok, menu.name + " updated VR actions fit distinct controller-ray targets")
 	await test_responsive_forms(account, main, lobby)

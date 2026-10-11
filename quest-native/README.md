@@ -1,6 +1,6 @@
 # Primal Monke — native PC and Quest crossplay
 
-This **Godot 4.6.3 OpenXR port** builds a Windows x64 executable and an ARM64 Quest APK. Version **0.5.0** adds updated menus, first-run registration, error codes, public names and picture uploads/PFPs, cosmetic XP/levels, Player Tag, optional voice chat, tutorials, original sound effects and ambience, and a climbable treehouse. Up to eight PC and Quest players can share a room. Solo play remains available without an account connection.
+This **Godot 4.6.3 OpenXR port** builds a Windows x64 executable and an ARM64 Quest APK. Version **0.5.1** adds updated menus, first-run registration, error codes, public names and picture uploads/PFPs, cosmetic XP/levels, Player Tag, optional voice chat, tutorials, original sound effects and ambience, and a climbable treehouse. Up to eight PC and Quest players can share a room. Solo play remains available without an account connection.
 
 The Unity **2021.3.21f1** and WebXR projects remain separate single-player versions. They cannot join these native multiplayer sessions. The forest, monkeys, icon, and audio are original; no Gorilla Tag assets or code are included.
 
@@ -46,7 +46,7 @@ Tracking/focus loss pauses that player's movement and tags. Recenter clears hand
 
 ## Crossplay
 
-1. Install matching **0.5.0** Windows and Quest builds and connect devices to the same local network. Guest Wi-Fi/client isolation can block connections.
+1. Install matching **0.5.1** Windows and Quest builds and connect devices to the same local network. Guest Wi-Fi/client isolation can block connections.
 2. Choose **Multiplayer lobby**. One player selects **Host** and shares the local IPv4 address shown in the lobby. On Windows, allow the game through the firewall for your private network.
 3. Other players enter that address and select **Join**. VR has a controller-operated IPv4 keypad. Public names, levels, and pictures appear in the room roster.
 4. While the room is waiting, the host selects **Co-op chase** or **Player Tag** with the mode button. Co-op shares the five AI monkeys, score, and countdown. Player Tag requires at least two players: one orange player is IT and transfers the role by tagging another player; a short cooldown prevents immediate tag-back.
@@ -116,7 +116,7 @@ Only verified IDs in the title-owned developer list can use developer tools. The
 
    Replace these placeholders. A missing key, empty/malformed list, or unmatched ID grants nobody access. No developer IDs have been supplied or granted by this update.
 3. Save the title data and choose **Refresh access** in Account. PlayFab can cache title data for approximately a minute; retry after that if necessary.
-4. A verified developer opens tools with **F2 / left Y**; use the right aim ray/trigger for VR buttons.
+4. A verified developer sees **Dev tools** in Main and Account. Select that button or use **F2 / left Y**; use the right aim ray/trigger for VR buttons. The button disappears when access expires, is revoked, or the player signs out.
 
 Tools include restart, +30 seconds (maximum 300), bot freeze/resume, tag all monkeys, local respawn, and diagnostics. Shared-round tools require a running round and an offline player or host. Developer clients can use local respawn/diagnostics but cannot change the host's round. Every handler checks current permission and authority, including direct calls; there are no remote developer-action RPCs, shared passwords, or command-line unlocks.
 
