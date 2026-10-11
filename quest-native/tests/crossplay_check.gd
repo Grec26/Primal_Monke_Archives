@@ -75,6 +75,11 @@ func run() -> void:
 	root.add_child(game)
 	await physics_frame
 	await physics_frame
+	if game.has_method("start_solo"):
+		game.start_solo()
+		if not await wait_for(func(): return game.frontend_state == "playing", "initial solo preparation completes before networking"):
+			quit(1)
+			return
 	game.lobby.set_open(false)
 	# Client local poses remain controllable; networking and game physics stay live.
 	game.player.set_physics_process(false)
@@ -93,6 +98,7 @@ func run() -> void:
 func run_host() -> void:
 	game.host_session()
 	check(game.session.is_host(), "ENet host starts on UDP 7777")
+	check(game.session.phase == "lobby" and game.session.can_start_round(), "host opens a staging lobby with an explicit start control")
 	freeze_bots()
 	var positions: Array[Vector3] = [Vector3.ZERO, Vector3(9, 0, 9), Vector3(-9, 0, 9), Vector3(9, 0, -9), Vector3(-9, 0, -9)]
 	for i in range(game.bots.size()): game.bots[i].global_position = positions[i]
@@ -104,6 +110,25 @@ func run_host() -> void:
 	await wait_signal("client2-ready")
 	var first_id := int(read_signal("client1-ready").get("id", 0))
 	check(first_id > 1, "client receives a distinct nonauthority peer ID")
+	check(game.session.room_roster().size() == 3 and game.session.room_roster()[0].label == "Host", "authority creates a three-player lobby roster from peer IDs")
+	var waiting_time: float = game.remaining
+	await pause(0.4)
+	check(is_equal_approx(game.remaining, waiting_time) and game.score == 0, "lobby pauses the authoritative countdown and tags")
+	check(game.session.participant_poses().is_empty() and not game.session.make_snapshot().ready, "lobby keeps participant interactions and ready state disabled")
+	write_signal("lobby-check", {"remaining": waiting_time})
+	await wait_signal("client1-lobby-checked")
+	await wait_signal("client2-lobby-checked")
+	await pause(0.1)
+	check(game.session.phase == "lobby" and game.score == 0, "nonhost start and forged phase RPCs cannot leave the lobby")
+	check(game.session.start_round(), "host explicitly starts the shared loading phase")
+	check(game.session.phase == "loading" and game.session.participant_poses().is_empty(), "loading keeps tags disabled until the round is prepared")
+	var loading_generation: int = game.session.phase_generation
+	write_signal("host-started")
+	await wait_for(func(): return game.session.phase == "playing", "host loading completes before authoritative play")
+	check(not game.session.complete_loading(loading_generation), "completed loading cannot start a duplicate round")
+	freeze_bots()
+	for i in range(game.bots.size()): game.bots[i].global_position = positions[i]
+	park_player(Vector3(0, 0.1, -5))
 	write_signal("baseline", {"remaining": game.remaining, "round": game.session.round_id})
 	await wait_signal("client1-baseline")
 	await wait_signal("client2-baseline")
@@ -173,12 +198,28 @@ func run_client() -> void:
 	park_player(Vector3(-10, 0.1, -5))
 	await wait_for(func(): return game.session.avatars.size() == 2, "client renders host and other client avatars")
 	write_signal(role + "-ready", {"id": game.multiplayer.get_unique_id()})
+	await wait_signal("lobby-check")
+	check(game.session.phase == "lobby" and not game.session.can_start_round(), "client joins the waiting lobby without host start permission")
+	check(game.session.room_roster().size() == 3 and game.session.room_roster()[0].label == "Host", "client receives the authoritative three-player roster")
+	check(is_equal_approx(game.remaining, float(read_signal("lobby-check").get("remaining", -1))) and game.score == 0, "waiting client receives the paused countdown")
+	check(not game.player.input_allowed and game.session.participant_poses().is_empty(), "waiting lobby blocks local movement and tagging")
+	if role == "client1":
+		check(not game.session.start_round() and not game.session.complete_loading(), "client cannot invoke host start or loading completion")
+		var forged_phase := {"sequence": 999999, "round": game.session.received_round, "remaining": 0.0, "score": 5, "finished": true, "bots": [], "players": {}, "phase": "playing", "ready": true}
+		print("Expected permission rejection follows: nonauthority peer attempts host-only phase RPC.")
+		for peer_id in game.multiplayer.get_peers(): game.session._phase_snapshot.rpc_id(peer_id, forged_phase)
+	await pause(0.2)
+	check(game.session.phase == "lobby" and game.score == 0, "forged phase snapshot cannot start a client round")
+	write_signal(role + "-lobby-checked")
+	await wait_signal("host-started")
+	await wait_for(func(): return game.session.phase == "playing" and game.player.input_allowed, "host start releases client play after loading")
+	park_player(Vector3(-10, 0.1, -5))
 	await wait_signal("baseline")
 	await pause(0.2)
 	var baseline := read_signal("baseline")
 	check(game.session.received_round == int(baseline.get("round", -1)), "shared round generation matches host")
 	check(game.remaining <= float(baseline.get("remaining", 0)) + 0.2 and game.remaining > float(baseline.get("remaining", 0)) - 1.0, "shared timer tracks host snapshots")
-	check(game.bots[0].global_position.distance_to(Vector3.ZERO) < 0.1 and game.bots[1].global_position.distance_to(Vector3(9, 0, 9)) < 0.1, "shared bot positions come from host")
+	await wait_for(func(): return game.bots[0].global_position.distance_to(Vector3.ZERO) < 0.1 and game.bots[1].global_position.distance_to(Vector3(9, 0, 9)) < 0.1, "shared bot positions converge to host snapshots")
 	check(game.score == 0 and not game.bots[0].tagged, "clients begin with shared untagged bots")
 	check(game.session.avatars.values().all(func(avatar): return avatar.visible), "both remote player avatars are active and visible")
 	if role == "client1": check(game.session.avatars.values().any(func(avatar): return avatar.target.get("vr", false)), "desktop client renders a VR participant avatar")

@@ -2,7 +2,7 @@
 
 [Download PrimalMonke-Quest.apk](https://github.com/Grec26/Primal_Monke_Archives/raw/refs/heads/main/apk/PrimalMonke-Quest.apk)
 
-Native Godot OpenXR **0.3.0** test build, approximately **85 MB** (81 MiB), for an ARM64 Quest headset. This separate port includes forest chase, arm-driven movement, five AI monkeys, co-op crossplay with the matching [Windows/PC VR build](../pc/README.md), and PlayFab-controlled developer tools. The Unity project remains separate.
+Native Godot OpenXR **0.4.0** test build for an ARM64 Quest headset. This separate port includes a custom monkey icon, main menu, loading screens, an eight-player waiting lobby, forest chase, arm-driven movement, five AI monkeys, co-op crossplay with the matching [Windows/PC VR build](../pc/README.md), and PlayFab-controlled developer tools. The Unity project remains separate. Exact size and checksum are in [build-info.json](build-info.json).
 
 Sideload through SideQuest or `adb install -r PrimalMonke-Quest.apk`, then launch **Primal Monke** from Unknown Sources. Enable developer mode and authorize USB debugging first.
 
@@ -12,6 +12,6 @@ The game initially signs this device into PlayFab title **1A7D9B**. **Account / 
 
 Android signature, ZIP integrity, native-library alignment, ARM64 libraries, OpenXR loader/manifest, and packaged resources are checked during export. Native gameplay and real ENet sessions are tested headlessly. No headset is available; real headset launch, controllers, performance, and comfort remain untested.
 
-All 16 gameplay and 134 mocked account/developer-access checks pass, including registration and credential sign-in. Live PlayFab sign-in remains unverified because this cloud's network policy blocks the title API; the game remains playable without an account connection.
+All 16 gameplay, 134 mocked account/developer-access, 49 frontend checks, and 129 three-process ENet assertions pass. The game starts at the main menu; choose **Play solo** or **Multiplayer lobby**, then have the host press **Start match**. Live PlayFab sign-in remains unverified because this cloud's network policy blocks the title API; the game remains playable without an account connection.
 
 [Build details](build-info.json) · [SHA256 checksum](PrimalMonke-Quest.apk.sha256) · [Source and rebuild instructions](../quest-native/README.md)

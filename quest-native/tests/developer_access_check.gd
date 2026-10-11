@@ -355,6 +355,8 @@ func test_game_handlers() -> void:
 	root.add_child(game)
 	await physics_frame
 	await physics_frame
+	game.start_solo()
+	while game.frontend_state == "loading": await process_frame
 	check(game.has_method("developer_action") and game.has_method("developer_action_allowed"), "game exposes protected developer action guard")
 	game.set_physics_process(false)
 	game.player.set_physics_process(false)

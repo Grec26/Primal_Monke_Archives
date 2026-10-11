@@ -1,6 +1,6 @@
 # Primal Monke — Forest Chase
 
-**PC + Quest crossplay (0.3.0):** [Windows download](https://github.com/Grec26/Primal_Monke_Archives/raw/refs/heads/main/pc/PrimalMonke-Windows.zip) · [Quest APK](https://github.com/Grec26/Primal_Monke_Archives/raw/refs/heads/main/apk/PrimalMonke-Quest.apk). Extract the Windows ZIP and use **Play-PCVR.bat** for OpenXR headset play or **Play-Desktop.bat** for keyboard/mouse. These matching native Godot builds share a co-op forest round with up to eight players. [Crossplay instructions](quest-native/README.md#crossplay).
+**PC + Quest crossplay (0.4.0):** [Windows download](https://github.com/Grec26/Primal_Monke_Archives/raw/refs/heads/main/pc/PrimalMonke-Windows.zip) · [Quest APK](https://github.com/Grec26/Primal_Monke_Archives/raw/refs/heads/main/apk/PrimalMonke-Quest.apk). Extract the Windows ZIP and use **Play-PCVR.bat** for OpenXR headset play or **Play-Desktop.bat** for keyboard/mouse. The new app icon, main menu, and loading screens lead into solo play or an eight-player lobby; the host starts the shared forest round. [Crossplay instructions](quest-native/README.md#crossplay).
 
 **Accounts and developer tools:** PlayFab title **1A7D9B** supports automatic device accounts, username/email registration, and account sign-in on PC and Quest. Open **Account / F3 / left X**. Only IDs in the title's `PrimalMonkeDeveloperIds` list can open the dev menu with **F2 / left Y**. [Account instructions](quest-native/README.md#accounts) · [Developer setup](quest-native/README.md#developer-access).
 

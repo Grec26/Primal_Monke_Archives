@@ -2,11 +2,17 @@
 
 [Download PrimalMonke-Windows.zip](PrimalMonke-Windows.zip?raw=true) and extract **all four files** into the same folder. Choose **Play-Desktop.bat** for keyboard and mouse play, or **Play-PCVR.bat** for a tracked headset and controllers. The ZIP contains the Windows 64-bit executable with its game data embedded, both launchers, and brief instructions. Unity and Godot are not required to play. Windows 10/11 and a graphics driver supporting OpenGL 3.3 are recommended.
 
+## Start playing
+
+Version **0.4.0** loads the forest resources before opening the main menu. Choose **Play solo** for a new round, **Multiplayer lobby** to host or join friends, or **Account** to manage sign-in. **PC VR** and **Desktop** switch play modes while you are offline. **Resume game** returns to an existing round without resetting it.
+
+Press **F1** to open the main menu during play. **Tab** on desktop or right **B** in VR opens the main menu offline and the multiplayer lobby online. In a staging lobby, wait for the host to start the match; movement, tagging, and the round timer remain paused.
+
 ## PC VR
 
 Connect your headset, start its PC OpenXR runtime, and launch **Play-PCVR.bat**. For a Quest headset, establish Quest Link/Air Link or another configured PC OpenXR connection first. Set your headset software as the active OpenXR runtime when needed. The PC VR launcher explicitly enables OpenXR; the desktop launcher disables it. You can also switch modes from the game's public menu.
 
-In VR, push against surfaces with your tracked controllers to move and climb, touch monkeys to tag them, and press right **A** to restart a round you host. Right **B** opens the multiplayer menu; point with the right controller and press its trigger to select buttons.
+In VR, push against surfaces with your tracked controllers to move and climb, touch monkeys to tag them, and press right **A** to restart a round you host. Right **B** opens the main menu offline or lobby online; point with the right controller and press its trigger to select buttons.
 
 ## Controls
 
@@ -15,7 +21,8 @@ In VR, push against surfaces with your tracked controllers to move and climb, to
 - **Space**: jump.
 - **E**: tag a nearby monkey.
 - **R**: restart a solo round or a round you host.
-- **Tab**: open or close the multiplayer menu.
+- **F1**: open the main menu.
+- **Tab**: main menu offline or multiplayer lobby online; in VR, press right **B**.
 - **F3**: open or close Account; in VR, press left **X**.
 - **F2**: open or close developer tools when your account has access; in VR, press left **Y**.
 
@@ -31,12 +38,13 @@ The owner approves selected PlayFab IDs through the server's `PrimalMonkeDevelop
 
 ## Play with Quest
 
-Use the matching **0.3.0** [Quest APK](../apk/README.md). This native Windows game and that native Quest build share one multiplayer protocol. The Unity and browser versions use their own separate projects.
+Use the matching **0.4.0** [Quest APK](../apk/README.md). This native Windows game and that native Quest build share one multiplayer protocol. The Unity and browser versions use their own separate projects.
 
 1. Connect the PC and Quest to the same local network.
-2. On either device, open the multiplayer menu and choose **Host**. The menu shows that device's local IP address.
-3. On the other device, enter the host's IPv4 address and choose **Join**. On Windows, press **Tab**; on Quest, press right **B** and point at the menu with the right controller, using the trigger to select buttons and enter the address.
-4. Tag the five AI monkeys together before the shared 90-second timer expires. The host controls restarts. Up to eight players can join the same session.
+2. Choose **Multiplayer lobby** from each main menu. On either device, choose **Host**. The lobby shows that device's local IP address.
+3. On the other device, enter the host's IPv4 address and choose **Join**. On Quest, point at the lobby with the right controller and use its trigger to select buttons and enter the address.
+4. Wait in the lobby and check the roster. The host chooses **Start match** when everyone has joined. Both devices show a loading screen before entering the shared round; joining a room by itself leaves gameplay and the timer paused.
+5. Tag the five AI monkeys together before the shared 90-second timer expires. The host controls restarts. Up to eight players can join the same session. **Tab** or right **B** reopens the lobby during online play.
 
 If Windows asks, allow the game through its firewall on your private network. Connections use **UDP 7777**. Guest Wi-Fi isolation can prevent devices from connecting. There is no public matchmaking service; this build is intended for direct connections on a local network.
 
@@ -52,6 +60,8 @@ Set `GODOT_BIN` if the executable is not named `godot`. The script writes the ex
 
 ## Verification
 
-The Windows x64 release export was built in the cloud workspace. PE architecture, ZIP integrity, both launcher arguments, embedded game resources, and game-resource checksums were verified. The exact embedded game pack also started successfully on Linux Godot in headless mode. All 16 native smoke checks and 134 account, registration, developer access, and play mode checks passed. Mock UI checks and an independent review verified password masking, clearing, whitespace preservation, and all 95 printable ASCII keyboard characters. A three-process ENet session passed with mixed desktop and simulated VR poses. Live PlayFab sign-in/registration, Windows execution, Windows/Quest device connections, real headset controllers, and rendering/performance still need testing.
+The Windows x64 release export was built in the cloud workspace. PE architecture, ZIP integrity, both launcher arguments, embedded game resources, and game-resource checksums were verified. The embedded app icon matches the source artwork at 16, 32, 48, 64, 128, and 256 pixels. The exact embedded game pack started on Linux Godot and passed all 49 frontend checks, including threaded boot loading, main menu, solo/resume, staging lobby, host Start match, and initial headset menu placement. Desktop screens were also checked at widths of 1280 and 960 pixels in the cloud.
 
-The download is about **34.3 MiB**; the extracted executable is about **99.8 MiB**. Exact sizes and SHA-256 hashes are recorded in [build-info.json](build-info.json). The ZIP checksum is also available in [PrimalMonke-Windows.zip.sha256](PrimalMonke-Windows.zip.sha256).
+All 16 native smoke checks and 134 account, registration, developer access, and play mode checks passed. Mock UI checks and an independent review verified password masking, clearing, whitespace preservation, and all 95 printable ASCII keyboard characters. A three-process ENet session passed 129 assertions, including staged start and mixed desktop/simulated VR poses. Live PlayFab sign-in/registration, Windows execution, Windows/Quest device connections, real headset controllers, and rendering/performance still need testing.
+
+The download is about **37.5 MiB**; the extracted executable is about **103.0 MiB**. Exact sizes and SHA-256 hashes are recorded in [build-info.json](build-info.json). The ZIP checksum is also available in [PrimalMonke-Windows.zip.sha256](PrimalMonke-Windows.zip.sha256).

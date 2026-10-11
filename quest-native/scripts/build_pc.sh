@@ -47,7 +47,7 @@ pm_write_launcher() {
 pm_write_launcher Play-Desktop.bat off desktop
 pm_write_launcher Play-PCVR.bat on pcvr
 cat > "$pm_output_dir/README.txt" <<'README'
-Primal Monke 0.3.0 for Windows
+Primal Monke 0.4.0 for Windows
 
 Extract every file from the ZIP into the same folder before playing.
 
@@ -56,8 +56,15 @@ Play-PCVR.bat: tracked headset and controller play using OpenXR.
 Connect your headset and start its active OpenXR runtime first. For a Quest
 headset, use Quest Link/Air Link or another configured PC OpenXR connection.
 
-Desktop controls: WASD move, hold right mouse to look, Space jump, E tag,
-R restart your round, and Tab open/close the multiplayer menu.
+The game loads its forest resources before showing the main menu. Choose Play
+solo for a new round, Multiplayer lobby to meet friends, or Account to manage
+sign-in. PC VR and Desktop switch play modes while you are offline. Resume
+game returns to an existing round without starting over.
+
+Desktop controls: WASD move, hold right mouse to look, Space jump, E tag, and
+R restart a solo round or a round you host. F1 opens the main menu. Tab opens
+the main menu offline or the lobby online; right B serves the same role in VR.
+Point with the right controller and press its trigger to select menu buttons.
 
 The game automatically signs in a saved device account with PlayFab at startup.
 Account opens with F3 on desktop or left X in VR and shows your public PlayFab
@@ -79,9 +86,12 @@ After your PlayFab ID is added to the server's developer list, choose Refresh
 access in Account. F2 on desktop or left Y in VR opens the developer menu.
 Use the same registered account on PC and Quest to keep the same approved ID.
 
-To play with standalone Quest, install the matching 0.3.0 native APK. Connect
-both devices to the same local network, choose Host on one device, and enter
-that host's IPv4 address on the other. Networking uses UDP port 7777.
+To play with standalone Quest, install the matching 0.4.0 native APK. Connect
+both devices to the same local network and choose Multiplayer lobby. Choose
+Host on one device, then enter its IPv4 address and choose Join on the other.
+Wait until the lobby roster contains your friends. The host chooses Start
+match to load the shared forest and begin the round. Movement, tagging, and
+the round timer stay paused while the room is staging. UDP port 7777 is used.
 
 Full instructions and source:
 https://github.com/Grec26/Primal_Monke_Archives/tree/main/pc

@@ -3,12 +3,34 @@ extends Node3D
 const PlayerScript = preload("res://scripts/arm_player.gd")
 const BotScript = preload("res://scripts/monkey_bot.gd")
 const SessionScript = preload("res://scripts/crossplay.gd")
-const LobbyScript = preload("res://scripts/lobby_menu.gd")
+const LobbyScript = preload("res://scripts/multiplayer_lobby.gd")
+const MainMenuScript = preload("res://scripts/main_menu.gd")
+const LoadingScript = preload("res://scripts/loading_screen.gd")
 const ModeScript = preload("res://scripts/play_mode.gd")
 const AccountScript = preload("res://scripts/playfab_account.gd")
 const AccountMenuScript = preload("res://scripts/account_menu.gd")
 var session: SessionScript
 var lobby: LobbyScript
+var main_menu: MainMenuScript
+var loading_screen: LoadingScript
+var frontend_state := "main_menu"
+var _resume_available := false
+var _loading_generation := 0
+var _changing_frontend := false
+var _returning_to_main := false
+var frontend_status := "Climb, chase, and play together."
+var lobby_members: Array:
+	get:
+		if session == null or network_mode == "offline":
+			return [{"id": 0, "label": "Local player", "is_host": false, "is_self": true}]
+		var roster: Array = []
+		for member in session.room_roster():
+			roster.append({"id": member.id, "label": member.label, "is_host": member.host, "is_self": member.local})
+		return roster
+var lobby_can_start: bool:
+	get: return session != null and session.can_start_round() and frontend_state != "loading"
+var lobby_is_staging: bool:
+	get: return not _resume_available or (session != null and network_mode != "offline" and session.phase != "playing")
 var account: AccountScript
 var account_menu: AccountMenuScript
 var dev_menu: Node3D
@@ -162,6 +184,13 @@ func _ready() -> void:
 	lobby.name = "LobbyMenu"
 	lobby.game = self
 	add_child(lobby)
+	main_menu = MainMenuScript.new()
+	main_menu.name = "MainMenu"
+	main_menu.game = self
+	add_child(main_menu)
+	loading_screen = LoadingScript.new()
+	loading_screen.name = "LoadingScreen"
+	player.head.add_child(loading_screen)
 	account = AccountScript.new()
 	account.name = "PlayFabAccount"
 	add_child(account)
@@ -177,10 +206,136 @@ func _ready() -> void:
 	diagnostics_board.no_depth_test = true
 	diagnostics_board.visible = false
 	player.head.add_child(diagnostics_board)
+	_set_frontend_state("main_menu")
 	# Headless tests never register real players or make external account requests.
 	if DisplayServer.get_name() != "headless": account.call_deferred("login_device")
 
+func _set_frontend_state(state: String) -> void:
+	frontend_state = state
+	_changing_frontend = true
+	if account_menu != null: account_menu.set_open(false)
+	if is_instance_valid(dev_menu): dev_menu.set_open(false)
+	if main_menu != null: main_menu.set_open(state == "main_menu")
+	if lobby != null: lobby.set_open(state == "lobby")
+	if loading_screen != null and state != "loading": loading_screen.hide_loading()
+	_changing_frontend = false
+	player.input_allowed = false
+	player.reset_tracking_history()
+	board.visible = state == "playing"
+	desktop_label.visible = state == "playing"
+
+func open_main_menu() -> void:
+	if frontend_state == "loading": return
+	_set_frontend_state("main_menu")
+
+func can_resume_play() -> bool:
+	return _resume_available and frontend_state != "loading" and (network_mode == "offline" or session.phase == "playing")
+
+func resume_play() -> void:
+	if can_resume_play(): _set_frontend_state("playing")
+
+func open_multiplayer_lobby() -> void:
+	if frontend_state == "loading": return
+	_set_frontend_state("lobby")
+
+func can_open_lobby_menu() -> bool:
+	return frontend_state in ["lobby", "playing"]
+
+func on_lobby_menu_closed() -> void:
+	if can_resume_play(): _set_frontend_state("playing")
+
+func return_to_main_menu() -> void:
+	_loading_generation += 1
+	_returning_to_main = true
+	session.leave()
+	_returning_to_main = false
+	_resume_available = false
+	_set_frontend_state("main_menu")
+
+func start_solo() -> void:
+	if frontend_state == "loading": return
+	_returning_to_main = true
+	session.leave()
+	_returning_to_main = false
+	_loading_generation += 1
+	var generation := _loading_generation
+	_set_frontend_state("loading")
+	loading_screen.show_loading("Preparing the forest", 0.15)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if generation != _loading_generation or frontend_state != "loading": return
+	restart()
+	loading_screen.set_progress(1.0, "Forest ready")
+	await get_tree().process_frame
+	if generation != _loading_generation or frontend_state != "loading": return
+	_resume_available = true
+	_set_frontend_state("playing")
+
+func start_multiplayer_round() -> void:
+	if lobby_can_start: session.start_round()
+
+func on_lobby_phase_changed(phase: String) -> void:
+	if _returning_to_main or main_menu == null: return
+	if network_mode == "offline":
+		_loading_generation += 1
+		_set_frontend_state("playing" if _resume_available else "lobby")
+	elif phase == "lobby":
+		_resume_available = false
+		_loading_generation += 1
+		_set_frontend_state("lobby")
+	elif phase == "loading":
+		_prepare_online_round(session.phase_generation)
+	elif phase == "playing":
+		_finish_online_transition()
+
+func _finish_online_transition() -> void:
+	# A newer authoritative snapshot can overtake the loading announcement.
+	# Always present local preparation before unlocking a newly started round.
+	_loading_generation += 1
+	var generation := _loading_generation
+	_set_frontend_state("loading")
+	loading_screen.show_loading("Forest ready", 1.0)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if generation != _loading_generation or network_mode == "offline" or session.phase != "playing": return
+	_resume_available = true
+	_set_frontend_state("playing")
+
+func _prepare_online_round(phase_generation: int) -> void:
+	_loading_generation += 1
+	var generation := _loading_generation
+	_set_frontend_state("loading")
+	loading_screen.show_loading("Preparing the shared forest" if session.is_host() else "Waiting for the host", 0.5)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	if generation != _loading_generation or frontend_state != "loading": return
+	if session.is_host(): session.complete_loading(phase_generation)
+
+func on_network_left() -> void:
+	if _returning_to_main: return
+	_loading_generation += 1
+	# Disconnects can arrive after the room phase became playing, while the
+	# local loading view is still being presented. Always release that view.
+	if frontend_state == "loading":
+		_resume_available = false
+		_set_frontend_state("lobby")
+	elif not _resume_available and frontend_state != "main_menu":
+		_set_frontend_state("lobby")
+
+func quit_game() -> void:
+	if OS.has_feature("android") or frontend_state == "loading": return
+	session.leave()
+	get_tree().quit()
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.physical_keycode == KEY_TAB and network_mode == "offline" and frontend_state != "lobby":
+			if frontend_state == "main_menu" and can_resume_play(): resume_play()
+			else: open_main_menu()
+			get_viewport().set_input_as_handled()
+
 func can_switch_play_mode(mode: String) -> bool:
+	if frontend_state == "loading": return false
 	if OS.has_feature("android") or DisplayServer.get_name() == "headless": return false
 	if mode not in ["desktop", "pcvr"] or player == null or network_mode != "offline": return false
 	return (mode == "pcvr" and not player.xr_running) or (mode == "desktop" and player.xr_running)
@@ -197,15 +352,34 @@ func switch_play_mode(mode: String) -> void:
 	get_tree().quit()
 
 func open_account_menu() -> void:
-	account_menu.set_open(true)
+	if can_open_account_menu(): account_menu.set_open(true)
+
+func can_open_account_menu() -> bool:
+	return frontend_state != "loading"
 
 func on_account_menu_open() -> void:
+	_changing_frontend = true
 	lobby.set_open(false)
+	main_menu.set_open(false)
+	player.input_allowed = false
 	if is_instance_valid(dev_menu): dev_menu.set_open(false)
+	_changing_frontend = false
+
+func on_account_menu_closed() -> void:
+	if _changing_frontend: return
+	if frontend_state == "main_menu": main_menu.set_open(true)
+	elif frontend_state == "lobby": lobby.set_open(true)
 
 func on_developer_menu_open() -> void:
+	_changing_frontend = true
 	lobby.set_open(false)
+	main_menu.set_open(false)
 	account_menu.set_open(false)
+	_changing_frontend = false
+	player.input_allowed = false
+
+func on_developer_menu_closed() -> void:
+	on_account_menu_closed()
 
 func account_login_device() -> void:
 	account.login_device()
@@ -240,9 +414,10 @@ func _account_changed() -> void:
 		diagnostics_enabled = false
 
 func developer_action_allowed(action: String) -> bool:
-	if not account_is_developer: return false
+	if not account_is_developer or frontend_state == "loading": return false
 	if action in ["respawn", "diagnostics"]: return true
 	if action not in ["restart", "add_time", "freeze_bots", "tag_all"]: return false
+	if frontend_state != "playing" or (network_mode != "offline" and session.phase != "playing"): return false
 	return session != null and not session.is_client()
 
 func developer_action(action: String) -> void:
@@ -263,14 +438,21 @@ func developer_action(action: String) -> void:
 	if session.is_host(): session._send_snapshot()
 
 func host_session() -> void:
+	if frontend_state == "loading": return
 	session.host()
-	if session.is_host(): lobby.set_open(false)
+	if session.is_host(): _set_frontend_state("lobby")
 
 func join_session(address: String) -> void:
+	if frontend_state == "loading": return
 	session.join(address)
 
 func leave_session() -> void:
+	_loading_generation += 1
+	_returning_to_main = true
 	session.leave()
+	_returning_to_main = false
+	_resume_available = false
+	_set_frontend_state("lobby")
 
 func is_session_host() -> bool:
 	return session != null and session.is_host()
@@ -302,6 +484,7 @@ func create_player() -> void:
 	head.near = 0.03
 	head.far = 65
 	origin.add_child(head)
+	head.current = true
 	player.head = head
 	player.xr_running = get_viewport().use_xr
 	if not player.xr_running: head.position.y = 1.65
@@ -355,6 +538,7 @@ func restart() -> void:
 	if session != null: session.round_restarted()
 
 func tag_bot(bot: BotScript) -> void:
+	if frontend_state != "playing" or (session != null and network_mode != "offline" and session.phase != "playing"): return
 	if session != null and session.is_client(): return
 	if finished or bot.tagged: return
 	bot.tag()
@@ -363,12 +547,12 @@ func tag_bot(bot: BotScript) -> void:
 
 func _physics_process(delta: float) -> void:
 	if player == null: return
-	var menu_open: bool = (lobby != null and lobby.is_open) or (account_menu != null and account_menu.is_open) or (is_instance_valid(dev_menu) and dev_menu.is_open)
+	var menu_open: bool = frontend_state != "playing" or (main_menu != null and main_menu.is_open) or (lobby != null and lobby.is_open) or (account_menu != null and account_menu.is_open) or (is_instance_valid(dev_menu) and dev_menu.is_open)
 	# Opening the public lobby closes any other overlay, so only one menu owns input.
 	if lobby != null and lobby.is_open:
 		if account_menu != null and account_menu.is_open: account_menu.set_open(false)
 		if is_instance_valid(dev_menu) and dev_menu.is_open: dev_menu.set_open(false)
-	player.input_allowed = xr_focused and not menu_open
+	player.input_allowed = xr_focused and not menu_open and (network_mode == "offline" or session.phase == "playing")
 	var pressed: bool = (xr_focused and player.hands[1].is_button_pressed("ax_button")) if player.xr_running else Input.is_physical_key_pressed(KEY_R)
 	if pressed and not restart_held and player.input_allowed: request_restart()
 	restart_held = pressed
@@ -398,7 +582,7 @@ func _physics_process(delta: float) -> void:
 	var title := "ALL MONKEYS TAGGED!" if score == 5 else ("TIME'S UP!" if finished else "FOREST CHASE")
 	var status := "Push surfaces to move. Touch monkeys to tag." if player.xr_running else "WASD / right mouse: look / Space / E: tag"
 	if not active: status = "Paused — close menu / restore headset + controller tracking"
-	status += "\nRight B / Tab: multiplayer menu · " + network_mode
+	status += "\nRight B / Tab: menu · F1: main menu · " + network_mode
 	if session != null and session.is_client(): status += " · Host restarts"
 	else: status += " · Right A / R: restart"
 	if not play_mode_notice.is_empty(): status += "\n" + play_mode_notice

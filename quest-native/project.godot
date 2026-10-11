@@ -2,10 +2,10 @@ config_version=5
 
 [application]
 config/name="Primal Monke"
-config/version="0.3.0"
-run/main_scene="res://forest.tscn"
+config/version="0.4.0"
+run/main_scene="res://boot.tscn"
 config/features=PackedStringArray("4.6", "GL Compatibility")
-config/icon="res://icon.svg"
+config/icon="res://assets/app_icon.png"
 
 [display]
 window/size/viewport_width=1280

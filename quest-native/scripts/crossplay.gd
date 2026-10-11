@@ -4,7 +4,7 @@ extends Node
 const PORT := 7777
 const MAX_PLAYERS := 8
 const PROTOCOL := 1
-const GAME_VERSION := "0.3.0"
+const GAME_VERSION := "0.4.0"
 const STALE_MS := 2000
 const AvatarScript = preload("res://scripts/remote_monkey.gd")
 var game: Node3D
@@ -21,6 +21,8 @@ var snapshot_sequence := 0
 var received_sequence := -1
 var received_round := -1
 var bot_targets: Array = []
+var phase := "playing"
+var phase_generation := 0
 
 func _ready() -> void:
 	name = "Crossplay"
@@ -40,6 +42,44 @@ func is_host() -> bool:
 func is_client() -> bool:
 	return mode == "joining" or mode == "connected"
 
+func room_roster() -> Array:
+	var roster: Array = []
+	var ids := members.keys()
+	ids.sort()
+	for id in ids:
+		# Names come from the authority's ENet IDs, never a client's account claims.
+		roster.append({"id": int(id), "label": "Host" if int(id) == 1 else "Player %s" % id,
+			"host": int(id) == 1, "local": int(id) == multiplayer.get_unique_id()})
+	return roster
+
+func can_start_round() -> bool:
+	return is_host() and phase == "lobby"
+
+func start_round() -> bool:
+	if not can_start_round():
+		if is_client(): status = "Only the host can start the room"
+		return false
+	_set_phase("loading")
+	status = "Loading — preparing the shared round"
+	_send_phase_snapshot()
+	return true
+
+func complete_loading(expected_generation := -1) -> bool:
+	if not is_host() or phase != "loading": return false
+	if expected_generation >= 0 and expected_generation != phase_generation: return false
+	game.restart()
+	_set_phase("playing")
+	status = "Playing — PC + Quest co-op (%s/%s players)" % [members.size(), MAX_PLAYERS]
+	_send_phase_snapshot()
+	return true
+
+func _set_phase(next_phase: String) -> void:
+	if next_phase not in ["lobby", "loading", "playing"] or next_phase == phase: return
+	phase = next_phase
+	phase_generation += 1
+	if game != null and game.has_method("on_lobby_phase_changed"):
+		game.on_lobby_phase_changed(phase)
+
 func host() -> void:
 	leave()
 	var peer := ENetMultiplayerPeer.new()
@@ -49,7 +89,8 @@ func host() -> void:
 		return
 	multiplayer.multiplayer_peer = peer
 	mode = "hosting"
-	status = "Hosting — share IP %s, UDP %s" % [address, PORT]
+	_set_phase("lobby")
+	status = "Lobby — share IP %s, UDP %s; host starts the round" % [address, PORT]
 	round_id += 1
 	game.restart()
 	members[1] = local_pose()
@@ -67,6 +108,7 @@ func join(ip: String) -> void:
 		return
 	multiplayer.multiplayer_peer = peer
 	mode = "joining"
+	_set_phase("lobby")
 	status = "Connecting to %s:%s…" % [ip, PORT]
 	join_clock = 0
 	for bot in game.bots: bot.active = false
@@ -74,6 +116,8 @@ func join(ip: String) -> void:
 func leave(message := "Solo — host or join to play together") -> void:
 	var was_online := mode != "offline"
 	mode = "offline"
+	phase_generation += 1
+	_set_phase("playing")
 	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
 	members.clear()
 	for avatar in avatars.values(): avatar.queue_free()
@@ -83,6 +127,10 @@ func leave(message := "Solo — host or join to play together") -> void:
 	received_round = -1
 	status = message
 	if was_online: game.restart()
+	# Leaving can occur after the playing phase arrived but before local loading
+	# finished. Notify even when the phase string did not change.
+	if game != null and game.has_method("on_network_left"):
+		game.on_network_left()
 
 func _connected() -> void:
 	if mode == "joining": _hello.rpc_id(1, PROTOCOL, GAME_VERSION)
@@ -91,11 +139,16 @@ func _connected() -> void:
 func _hello(protocol: int, version: String) -> void:
 	if not is_host(): return
 	var sender := multiplayer.get_remote_sender_id()
+	if sender <= 1: return
 	if protocol != PROTOCOL or version != GAME_VERSION:
-		_rejected.rpc_id(sender, "Version mismatch — install matching PC and Quest 0.3.0 builds")
+		_rejected.rpc_id(sender, "Version mismatch — install matching PC and Quest 0.4.0 builds")
+		return
+	if not members.has(sender) and members.size() >= MAX_PLAYERS:
+		_rejected.rpc_id(sender, "Room full — up to %s players" % MAX_PLAYERS)
 		return
 	members[sender] = {"active": false, "seen": Time.get_ticks_msec()}
 	_welcome.rpc_id(sender, make_snapshot())
+	_send_snapshot()
 
 @rpc("authority", "call_remote", "reliable", 0)
 func _rejected(message: String) -> void:
@@ -105,10 +158,9 @@ func _rejected(message: String) -> void:
 func _welcome(state: Dictionary) -> void:
 	if mode != "joining": return
 	mode = "connected"
-	status = "Connected — PC + Quest co-op (%s/%s players)" % [state.players.size(), MAX_PLAYERS]
 	game.player.reset_player()
 	apply_snapshot(state)
-	game.lobby.set_open(false)
+	if phase == "playing": game.lobby.set_open(false)
 
 func local_pose() -> Dictionary:
 	var player = game.player
@@ -137,6 +189,7 @@ func _submit_pose(pose_round: int, body: Vector3, head: Vector3, rotation: Vecto
 
 func participant_poses() -> Array:
 	var result: Array = []
+	if mode != "offline" and phase != "playing": return result
 	if is_host():
 		members[1] = local_pose()
 		for pose in members.values():
@@ -163,10 +216,18 @@ func make_snapshot() -> Dictionary:
 		players[id] = pose
 	snapshot_sequence += 1
 	return {"sequence": snapshot_sequence, "round": round_id, "remaining": game.remaining,
-		"score": game.score, "finished": game.finished, "bots": bot_state, "players": players}
+		"score": game.score, "finished": game.finished, "bots": bot_state, "players": players,
+		"phase": phase, "ready": phase == "playing"}
 
 func _send_snapshot() -> void:
 	if is_host() and not multiplayer.get_peers().is_empty(): _snapshot.rpc(make_snapshot())
+
+func _send_phase_snapshot() -> void:
+	if is_host() and not multiplayer.get_peers().is_empty(): _phase_snapshot.rpc(make_snapshot())
+
+@rpc("authority", "call_remote", "reliable", 0)
+func _phase_snapshot(state: Dictionary) -> void:
+	if mode == "connected": apply_snapshot(state)
 
 @rpc("authority", "call_remote", "unreliable_ordered", 2)
 func _snapshot(state: Dictionary) -> void:
@@ -191,8 +252,11 @@ func apply_snapshot(state: Dictionary) -> void:
 		if bot_targets[i][2] and not bot.tagged: bot.tag()
 		bot.rotation.y = bot_targets[i][1]
 	if new_round: game.player.reset_player()
+	members = state.players.duplicate(true)
 	update_avatars(state.players)
-	status = "Connected — PC + Quest co-op (%s/%s players)" % [state.players.size(), MAX_PLAYERS]
+	_set_phase(str(state.get("phase", "playing")))
+	var phase_label := "Waiting for host" if phase == "lobby" else ("Loading" if phase == "loading" else "Playing")
+	status = "%s — PC + Quest co-op (%s/%s players)" % [phase_label, state.players.size(), MAX_PLAYERS]
 
 func update_avatars(players: Dictionary) -> void:
 	var local_id := multiplayer.get_unique_id()

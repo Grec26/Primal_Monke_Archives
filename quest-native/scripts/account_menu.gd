@@ -27,6 +27,8 @@ func _init() -> void:
 	_status_text = "Signing in this device…"
 
 func set_open(value: bool) -> void:
+	if value and is_instance_valid(game) and game.has_method("can_open_account_menu") and not game.call("can_open_account_menu"): return
+	var was_open := is_open
 	if value and not is_open and is_instance_valid(game) and game.has_method("on_account_menu_open"):
 		game.call("on_account_menu_open")
 	super.set_open(value)
@@ -35,6 +37,8 @@ func set_open(value: bool) -> void:
 		for control in [_username_edit, _email_edit, _password_edit]:
 			if control != null:
 				control.release_focus()
+		if was_open and is_instance_valid(game) and game.has_method("on_account_menu_closed"):
+			game.call("on_account_menu_closed")
 	elif not _is_xr() and _username_edit != null:
 		_username_edit.grab_focus()
 		_username_edit.select_all()

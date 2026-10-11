@@ -1,10 +1,10 @@
 {
   "file": "PrimalMonke-Quest.apk",
-  "bytes": 84799822,
-  "sha256": "db406b728e3d506904cbe4a5921226c84e7b3438aa7b6cbd2eeab6d8a203cd6f",
+  "bytes": 88672534,
+  "sha256": "75a1632501a12d733f6f4c9819fa1e788f0177f9517e0f0e4425625ac628e36e",
   "package": "com.grec26.primalmonke",
-  "version": "0.3.0",
-  "version_code": 3,
+  "version": "0.4.0",
+  "version_code": 4,
   "engine": "Godot 4.6.3",
   "architecture": "arm64-v8a",
   "min_sdk": 29,
@@ -20,7 +20,8 @@
     "passed": true,
     "peers": 3,
     "mixed_desktop_vr_poses": true,
-    "transport": "ENet UDP"
+    "transport": "ENet UDP",
+    "assertions_passed": 129
   },
   "playfab_title_id": "1A7D9B",
   "registration_enabled": true,
@@ -28,5 +29,14 @@
   "anonymous_registration_preserves_id": true,
   "developer_access": "Verified PlayFab account ID in title-owned PrimalMonkeDeveloperIds JSON list",
   "developer_access_checks_passed": 134,
-  "live_playfab_sign_in_verified": false
+  "live_playfab_sign_in_verified": false,
+  "frontend_checks_passed": 49,
+  "main_menu_enabled": true,
+  "threaded_boot_loading_verified": true,
+  "staged_multiplayer_lobby_enabled": true,
+  "host_starts_multiplayer_round": true,
+  "custom_icon_packaged_verified": true,
+  "source_desktop_menu_render_checks_passed": true,
+  "source_world_loading_layers_simulated_check_passed": true,
+  "initial_headset_menu_placement_verified_with_mock_pose": true
 }

@@ -14,11 +14,14 @@ func _init() -> void:
 	_status_text = "Developer tools ready."
 
 func set_open(value: bool) -> void:
+	var was_open := is_open
 	if value and not _action_enabled("diagnostics"):
 		return
 	if value and not is_open and is_instance_valid(game) and game.has_method("on_developer_menu_open"):
 		game.call("on_developer_menu_open")
 	super.set_open(value)
+	if was_open and not value and is_instance_valid(game) and game.has_method("on_developer_menu_closed"):
+		game.call("on_developer_menu_closed")
 	if value and not _is_xr() and _desktop_buttons.has("close"):
 		var close_button: Button = _desktop_buttons["close"]
 		close_button.grab_focus()

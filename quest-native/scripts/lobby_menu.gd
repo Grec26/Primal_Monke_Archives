@@ -32,6 +32,8 @@ var _hovered := -1
 var _toggle_held := false
 var _trigger_held := false
 var _mode_button_index := -1
+var _awaiting_head_pose := false
+var _placement_frames := 0
 
 func _ready() -> void:
 	_create_desktop_menu()
@@ -88,6 +90,8 @@ func set_open(value: bool) -> void:
 	if is_open == value:
 		return
 	is_open = value
+	_awaiting_head_pose = value and _is_xr()
+	_placement_frames = 0
 	var player := _player()
 	if player != null and player.has_method("reset_tracking_history"):
 		player.call("reset_tracking_history")
@@ -210,12 +214,23 @@ func _process(_delta: float) -> void:
 	refresh_status()
 	if is_open and _world_panel.visible != _is_xr():
 		if _is_xr():
+			_awaiting_head_pose = true
+			_placement_frames = 0
 			_place_world_panel()
 		else:
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		_update_visibility()
 	if not _is_xr():
 		return
+	if is_open and _awaiting_head_pose:
+		_placement_frames += 1
+		var tracker := XRServer.get_tracker("head") as XRPositionalTracker
+		var pose: XRPose = tracker.get_pose("default") if tracker != null else null
+		# Startup menus can open before the new camera receives its first pose.
+		# Use tracking availability directly: locomotion is paused in the menu.
+		if _placement_frames >= 2 and pose != null and pose.has_tracking_data:
+			_place_world_panel()
+			_awaiting_head_pose = false
 	if game.get("xr_focused") == false:
 		# Require a release after tracking/focus returns before accepting a click.
 		_toggle_held = true

@@ -15,6 +15,8 @@ func run() -> void:
 	root.add_child(game)
 	await physics_frame
 	await physics_frame
+	game.start_solo()
+	while game.frontend_state == "loading": await process_frame
 	check(game.bots.size() == 5, "five native monkeys spawned")
 	check(game.get_node_or_null("ForestFloor") != null, "arena and colliders created")
 	var resolved: Dictionary = game.player.resolve_hand(Vector3(0, 1, 0), Vector3(0, -4, 0))
