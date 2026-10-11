@@ -37,7 +37,8 @@ func toggle() -> void:
 func _process(delta: float) -> void:
 	# Right B belongs to the multiplayer lobby while that screen/session is
 	# active. F1 still reaches toggle() directly on desktop in every state.
-	if _game_text("network_mode", "offline") != "offline" or _game_text("frontend_state", "main_menu") == "lobby":
+	var creating := is_instance_valid(game) and game.has_method("_map_creation_active") and bool(game.call("_map_creation_active"))
+	if creating or _game_text("network_mode", "offline") != "offline" or _game_text("frontend_state", "main_menu") == "lobby":
 		_toggle_held = true
 	super._process(delta)
 
@@ -55,6 +56,7 @@ func _action_enabled(action: String) -> bool:
 	match action:
 		"solo": return game.has_method("start_solo")
 		"multiplayer": return game.has_method("open_multiplayer_lobby")
+		"map_creator": return game.has_method("can_open_map_creator") and game.has_method("open_map_creator") and bool(game.call("can_open_map_creator"))
 		"account": return game.has_method("open_account_menu")
 		"developer": return game.has_method("can_open_developer_menu") and game.has_method("open_developer_menu") and bool(game.call("can_open_developer_menu"))
 		"settings": return game.has_method("open_settings_menu")
@@ -72,6 +74,7 @@ func _dispatch(action: String) -> void:
 	match action:
 		"solo": game.call("start_solo")
 		"multiplayer": game.call("open_multiplayer_lobby")
+		"map_creator": game.call("open_map_creator")
 		"account": game.call("open_account_menu")
 		"developer": game.call("open_developer_menu")
 		"settings": game.call("open_settings_menu")
@@ -91,7 +94,7 @@ func refresh_status() -> void:
 	if not mode_notice.is_empty():
 		status += "\n" + mode_notice
 	var developer := bool(game.get("account_is_developer"))
-	var snapshot := "%s|%s|%s|%s|%s|%s|%s|%s|%s|%s" % [status, _is_xr(), _action_enabled("resume"), _action_enabled("pcvr"), _action_enabled("desktop"), _game_text("account_status", "Signed out"), _game_text("frontend_state", "main_menu"), _game_text("profile_summary", "Monke · Level 1"), developer, _action_enabled("developer")]
+	var snapshot := "%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s" % [status, _is_xr(), _action_enabled("resume"), _action_enabled("pcvr"), _action_enabled("desktop"), _game_text("account_status", "Signed out"), _game_text("frontend_state", "main_menu"), _game_text("profile_summary", "Monke · Level 1"), developer, _action_enabled("developer"), _action_enabled("map_creator")]
 	if snapshot == _state_snapshot:
 		return
 	_state_snapshot = snapshot
@@ -121,7 +124,8 @@ func _update_labels() -> void:
 	if _desktop_mode != null:
 		_desktop_mode.text = _mode_text()
 	if _world_status != null:
-		_world_status.text = _status_text
+		# Keep long provider/runtime notices clear of the first controller target.
+		_world_status.text = _status_text.replace("\n", " · ").left(112)
 	if _world_mode != null:
 		_world_mode.text = _mode_text()
 
@@ -175,6 +179,8 @@ func _create_desktop_menu() -> void:
 	_menu_button(content, "Resume game", "resume", true)
 	_menu_button(content, "Play solo", "solo", true)
 	_menu_button(content, "Multiplayer lobby", "multiplayer")
+	var creator_button := _menu_button(content, "Map creator", "map_creator")
+	creator_button.tooltip_text = "Build, save and playtest local maps. Leave multiplayer to create a map."
 	_desktop_utilities = GridContainer.new()
 	_desktop_utilities.columns = 2
 	_desktop_utilities.add_theme_constant_override("h_separation", 8)
@@ -193,6 +199,10 @@ func _create_desktop_menu() -> void:
 		_menu_button(mode_row, "PC VR", "pcvr")
 		_menu_button(mode_row, "Desktop", "desktop")
 		_menu_button(content, "Quit", "quit")
+	_desktop_mode = _label(content, "", 12, ORANGE)
+	_desktop_status = _label(content, "", 14, MUTED)
+	_desktop_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_desktop_status.custom_minimum_size.y = 32
 	var artwork := VBoxContainer.new()
 	_desktop_artwork = artwork
 	artwork.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -208,14 +218,10 @@ func _create_desktop_menu() -> void:
 	logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	logo_center.add_child(logo)
-	_label(artwork, "FIND YOUR TRIBE.", 27)
-	var intro := _label(artwork, "Explore solo or meet friends in a local lobby.\nPC and Quest can play on the same Wi-Fi.", 16, MUTED)
+	_label(artwork, "MAKE YOUR NEXT ADVENTURE.", 24)
+	var intro := _label(artwork, "Climb the canopy, explore the cave or build your own playground.\n\nLocal multiplayer connects PC and Quest on the same Wi-Fi. Custom maps are saved on this device for solo playtesting.", 16, MUTED)
 	intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_desktop_mode = _label(artwork, "", 14, ORANGE)
-	_desktop_status = _label(artwork, "", 15, MUTED)
-	_desktop_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_desktop_status.custom_minimum_size.y = 46
-	var hint := _label(artwork, "F1 / Tab: menu · F3: account\nHeadset: right B menu · aim + trigger", 13, MUTED)
+	var hint := _label(artwork, "F1: main menu · F3: account · F7: settings\nF8: map creator\nHeadset: right B menu · aim + trigger", 13, MUTED)
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	get_viewport().size_changed.connect(_adapt_desktop_layout)
 	_adapt_desktop_layout()
@@ -236,22 +242,24 @@ func _create_world_menu() -> void:
 	_world_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_world_button("PLAY SOLO", "solo", Vector2(0, 0.29), Vector2(1.46, 0.13), Color("946632"))
 	_world_button("MULTIPLAYER LOBBY", "multiplayer", Vector2(0, 0.115), Vector2(1.46, 0.13), Color("386d4b"))
-	_world_button("PROFILE + LEVELS", "profile", Vector2(-0.385, -0.055), Vector2(0.69, 0.12))
+	_world_button("MAP CREATOR · LOCAL", "map_creator", Vector2(0, -0.055), Vector2(1.46, 0.12), Color("3c6350"))
+	_world_buttons.back()["label"].font_size = 25
+	_world_button("PROFILE + LEVELS", "profile", Vector2(-0.385, -0.215), Vector2(0.69, 0.12))
 	_world_buttons.back()["label"].font_size = 24
-	_world_button("ACCOUNT", "account", Vector2(0.385, -0.055), Vector2(0.69, 0.12))
-	_world_button("TUTORIAL", "tutorial", Vector2(-0.385, -0.225), Vector2(0.69, 0.12))
-	_world_button("VOICE", "voice", Vector2(0.385, -0.225), Vector2(0.69, 0.12))
-	_world_button("SETTINGS", "settings", Vector2(-0.385, -0.395), Vector2(0.69, 0.12))
-	_world_button("RESUME GAME", "resume", Vector2(0.385, -0.395), Vector2(0.69, 0.12))
+	_world_button("ACCOUNT", "account", Vector2(0.385, -0.215), Vector2(0.69, 0.12))
+	_world_button("TUTORIAL", "tutorial", Vector2(-0.385, -0.375), Vector2(0.69, 0.12))
+	_world_button("VOICE", "voice", Vector2(0.385, -0.375), Vector2(0.69, 0.12))
+	_world_button("SETTINGS", "settings", Vector2(-0.385, -0.535), Vector2(0.69, 0.12))
+	_world_button("RESUME GAME", "resume", Vector2(0.385, -0.535), Vector2(0.69, 0.12))
 	_world_buttons.back()["label"].font_size = 24
 	if OS.get_name() != "Android":
-		_world_button("PC VR", "pcvr", Vector2(-0.385, -0.56), Vector2(0.69, 0.12))
-		_world_button("DESKTOP", "desktop", Vector2(0.385, -0.56), Vector2(0.69, 0.12))
-		_world_button("QUIT", "quit", Vector2(0, -0.715), Vector2(1.46, 0.1))
+		_world_button("PC VR", "pcvr", Vector2(-0.385, -0.695), Vector2(0.69, 0.12))
+		_world_button("DESKTOP", "desktop", Vector2(0.385, -0.695), Vector2(0.69, 0.12))
+		_world_button("QUIT", "quit", Vector2(0, -0.845), Vector2(1.46, 0.1))
 	else:
-		_world_label("PC + Quest · same Wi-Fi", Vector2(0, -0.62), 27)
-	_world_button("DEV TOOLS", "developer", Vector2(0, -0.855), Vector2(1.46, 0.10), Color("946632"))
-	_world_label("Right aim + trigger to select\nRight B opens this menu during play", Vector2(0, -1.015), 23)
+		_world_label("PC + Quest · same Wi-Fi", Vector2(0, -0.72), 27)
+	_world_button("DEV TOOLS", "developer", Vector2(0, -0.975), Vector2(1.46, 0.10), Color("946632"))
+	_world_label("Aim + trigger to select · Right B: menu", Vector2(0, -1.105), 22)
 	MenuTheme.world_text(_world_panel)
 	_pointer = MeshInstance3D.new()
 	var dot := SphereMesh.new()

@@ -24,6 +24,14 @@ func _ready() -> void:
 	_cave()
 	_hub()
 
+func set_arena_active(enabled: bool) -> void:
+	# The shared ground stays in both arenas. Disable every default obstacle,
+	# including sign posts, while editing or testing a local map.
+	visible = enabled
+	for solid in solids:
+		if not is_instance_valid(solid) or solid.name == "ForestFloor": continue
+		solid.collision_layer = 1 if enabled else 0
+
 func _material(color: String) -> StandardMaterial3D:
 	if not _materials.has(color):
 		var result := StandardMaterial3D.new()

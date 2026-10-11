@@ -7,6 +7,12 @@ const CARD := Color("1d3b30")
 const CREAM := Color("f5f1dd")
 const MUTED := Color("afc3a6")
 const AMBER := Color("efbe69")
+const TIPS := [
+	"Use both hands to push against surfaces and climb.",
+	"PC and Quest friends can join on the same Wi-Fi.",
+	"Map creator lets you build, save and playtest locally.",
+	"Voice is off until you choose to enable it."
+]
 
 var _shown := false
 var _failed := false
@@ -22,6 +28,11 @@ var _world_message: Label3D
 var _world_percentage: Label3D
 var _world_hint: Label3D
 var _world_fill: MeshInstance3D
+var _desktop_tip: Label
+var _desktop_panel: PanelContainer
+var _desktop_margin: MarginContainer
+var _tip_elapsed := 0.0
+var _tip_index := 0
 
 func _ready() -> void:
 	_create_desktop()
@@ -91,10 +102,12 @@ func _create_desktop() -> void:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_canvas.add_child(center)
 	var panel := PanelContainer.new()
+	_desktop_panel = panel
 	panel.custom_minimum_size = Vector2(580, 420)
 	panel.add_theme_stylebox_override("panel", _style(CARD, 28, Color("43624a")))
 	center.add_child(panel)
 	var margin := MarginContainer.new()
+	_desktop_margin = margin
 	for side in ["left", "right", "top", "bottom"]:
 		margin.add_theme_constant_override("margin_" + side, 36)
 	panel.add_child(margin)
@@ -114,7 +127,7 @@ func _create_desktop() -> void:
 	column.add_child(space)
 	_desktop_message = _label(_message, 19, CREAM)
 	_desktop_message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_desktop_message.custom_minimum_size = Vector2(500, 44)
+	_desktop_message.custom_minimum_size.y = 44
 	column.add_child(_desktop_message)
 	_desktop_progress = ProgressBar.new()
 	_desktop_progress.custom_minimum_size.y = 7
@@ -133,7 +146,20 @@ func _create_desktop() -> void:
 	_retry.add_theme_font_size_override("font_size", 18)
 	_retry.pressed.connect(func(): retry_requested.emit())
 	column.add_child(_retry)
-	column.add_child(_label("Swing in. Play together.", 13, MUTED))
+	_desktop_tip = _label(TIPS[0], 13, MUTED)
+	_desktop_tip.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_desktop_tip.custom_minimum_size.y = 36
+	column.add_child(_desktop_tip)
+	get_viewport().size_changed.connect(_adapt_desktop)
+	_adapt_desktop()
+
+func _adapt_desktop() -> void:
+	if _desktop_panel == null: return
+	var viewport_size := get_viewport().get_visible_rect().size
+	_desktop_panel.custom_minimum_size.x = clampf(viewport_size.x - 40.0, 260.0, 580.0)
+	var spacing := 20 if viewport_size.x < 640 else 36
+	for side in ["left", "right", "top", "bottom"]:
+		_desktop_margin.add_theme_constant_override("margin_" + side, spacing)
 
 func _world_quad(size: Vector2, location: Vector3, color: Color, priority: int = 0) -> MeshInstance3D:
 	var visual := MeshInstance3D.new()
@@ -204,12 +230,18 @@ func _update_content() -> void:
 	_desktop_percentage.visible = not _failed
 	_world_percentage.visible = not _failed
 	_retry.visible = _failed
-	_world_hint.text = "Press your trigger to try again" if _failed else "Swing in. Play together."
+	_world_hint.text = "Press your trigger to try again" if _failed else "Aim + trigger selects headset menus."
+	_desktop_tip.text = "Check your connection, then try again." if _failed else TIPS[_tip_index]
 
 func _update_visibility() -> void:
 	var in_headset := get_viewport().use_xr
 	_canvas.visible = _shown and not in_headset
 	_world.visible = _shown and in_headset
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	_update_visibility()
+	_tip_elapsed += delta
+	if not _failed and _tip_elapsed >= 5.0:
+		_tip_elapsed = 0.0
+		_tip_index = (_tip_index + 1) % TIPS.size()
+		_desktop_tip.text = TIPS[_tip_index]

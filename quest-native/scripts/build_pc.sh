@@ -47,7 +47,7 @@ pm_write_launcher() {
 pm_write_launcher Play-Desktop.bat off desktop
 pm_write_launcher Play-PCVR.bat on pcvr
 cat > "$pm_output_dir/README.txt" <<'README'
-Primal Monke 0.6.0 for Windows
+Primal Monke 0.7.0 for Windows
 
 Extract all four files from the ZIP into the same folder before playing.
 Play-Desktop.bat: keyboard and mouse play.
@@ -59,6 +59,14 @@ The game loads the forest, then offers Create account or Continue as guest
 on first launch. Choose Play solo for a 90-second monkey chase, or Multiplayer
 lobby for Co-op chase / Player Tag. The main menu also opens Account, Profile,
 Tutorial, Settings, and Voice. Resume game continues your round without resetting it.
+Map creator lets everyone build local maps while offline. Place platforms,
+blocks, walls, trees and rocks; move/resize/rotate/recolor/duplicate/delete;
+undo/redo; save/load six slots; try Blank/Parkour/Climb presets. Desktop has
+WASD/QE fly camera, right mouse look, mouse wheel zoom, and a numeric inspector.
+Headsets use paged aim/trigger controls, with right B to reopen the editor.
+F8 / right B returns from playtest. R / right A respawns during playtest.
+Custom maps have no XP/timer/bots and stay on this device; multiplayer keeps
+the original forest. Save before closing the app; exit restores the forest.
 PC VR and Desktop restart the game to switch modes while you are offline.
 
 Desktop controls:
@@ -97,7 +105,7 @@ Your name, picture, and level are public to room players. Guest progress stays
 local; signed-in accounts can sync public PlayFab profiles. Failed cloud sync
 retains local progress; use Retry sync. XP grants no developer privileges.
 
-To play with Quest, install the matching 0.6.0 APK and use the same local network.
+To play with Quest, install the matching 0.7.0 APK and use the same local network.
 Choose Multiplayer lobby; Host on one device, then enter its IPv4 address and
 Join on the others. Up to eight players share a room using UDP 7777.
 The host selects Co-op chase or Player Tag, then Start match. Gameplay/timer

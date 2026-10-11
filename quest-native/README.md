@@ -1,6 +1,6 @@
 # Primal Monke — native PC and Quest crossplay
 
-This **Godot 4.6.3 OpenXR port** builds a Windows x64 executable and an ARM64 Quest APK. Version **0.6.0** adds updated menus, first-run registration, error codes, public names and picture uploads/PFPs, cosmetic XP/levels, Player Tag, optional voice chat, tutorials, original sound effects and ambience, and a climbable treehouse. Settings save sound, desktop controls, and HUD preferences locally. The updated forest connects a treehouse, cave, lookout, and obstacle routes. Up to eight PC and Quest players can share a room. Solo play remains available without an account connection.
+This **Godot 4.6.3 OpenXR game** builds a Windows x64 executable and an ARM64 Quest APK. Version **0.7.0** adds a local map creator with six save slots, undo/redo, object editing, and PC/VR playtesting. A clearer main menu, compact desktop HUD, updated loading screens, forest sky, and lightweight ground details improve the presentation. Up to eight PC and Quest players can share the original forest in Co-op chase or Player Tag. Accounts, profiles/PFPs, cosmetic levels, optional voice, tutorials, and saved settings remain available. Solo play and map creation work without an account connection.
 
 The Unity **2021.3.21f1** and WebXR projects remain separate single-player versions. They cannot join these native multiplayer sessions. The forest, monkeys, icon, and audio are original; no Gorilla Tag assets or code are included.
 
@@ -24,7 +24,7 @@ Launch **Primal Monke** from Unknown Sources. The package identifier is `com.gre
 
 ## Play and controls
 
-Startup shows resource-loading progress, then offers **Create account** or **Continue as guest** on first launch. The main menu opens solo play, the multiplayer lobby, Account, Profile, Tutorial, and Voice. No round starts until you choose **Play solo** or the room's host chooses **Start match**. In VR, aim the right controller and pull its trigger to select menu buttons.
+Startup shows resource-loading progress, then offers **Create account** or **Continue as guest** on first launch. The main menu opens solo play, the multiplayer lobby, Map creator, Account, Profile, Tutorial, Settings, and Voice. No round starts until you choose **Play solo** or the room's host chooses **Start match**. In VR, aim the right controller and pull its trigger to select menu buttons.
 
 | Action | Desktop | Headset |
 | --- | --- | --- |
@@ -36,6 +36,7 @@ Startup shows resource-loading progress, then offers **Create account** or **Con
 | Account | F3 | Left X, or main menu |
 | Developer tools, with permission | F2 | Left Y |
 | Settings | F7 / Main menu | Main menu |
+| Map creator / return from map playtest | F8 / Main menu | Main menu; right B returns from playtest |
 | Tutorial / Profile / Voice | F4 / F5 / F6 | Main menu buttons |
 | Speak, after enabling voice | Hold V during captured gameplay, or unmute in Voice | Unmute/mute in Voice |
 
@@ -47,7 +48,7 @@ Tracking/focus loss pauses that player's movement and tags. Recenter clears hand
 
 ## Crossplay
 
-1. Install matching **0.6.0** Windows and Quest builds and connect devices to the same local network. Guest Wi-Fi/client isolation can block connections.
+1. Install matching **0.7.0** Windows and Quest builds and connect devices to the same local network. Guest Wi-Fi/client isolation can block connections.
 2. Choose **Multiplayer lobby**. One player selects **Host** and shares the local IPv4 address shown in the lobby. On Windows, allow the game through the firewall for your private network.
 3. Other players enter that address and select **Join**. VR has a controller-operated IPv4 keypad. Public names, levels, and pictures appear in the room roster.
 4. While the room is waiting, the host selects **Co-op chase** or **Player Tag** with the mode button. Co-op shares the five AI monkeys, score, and countdown. Player Tag requires at least two players: one orange player is IT and transfers the role by tagging another player; a short cooldown prevents immediate tag-back.
@@ -110,6 +111,22 @@ Open **Settings** from Main or press **F7** on PC. Adjust effects and forest amb
 
 The forest hub has signs leading to the treehouse, west cave, and east lookout. Stairs and bridges connect elevated routes, with climbable surfaces for hand movement. The central clearing stays available for monkey chases and Player Tag.
 
+## Map creator
+
+![Desktop map creator](../pc/screenshots/map-creator.png)
+
+Choose **Map creator** in Main or press **F8** while offline. Everyone can build local maps; developer access is not required. Leave a multiplayer room before opening the editor. Custom maps are for local playtesting and are not synchronized to multiplayer rooms.
+
+Start with **Blank arena**, **Parkour starter**, or **Climbing garden**, or load one of six numbered slots. Place platforms, blocks, walls, trees, and rocks on the shared arena floor. Select objects to move, resize, rotate, recolor, duplicate, or delete them. Grid snapping cycles through 0.25, 0.5, and 1 metre. The inspector shows the selected object's values. Undo/redo retains up to 64 edits; saved/unsaved feedback and a confirmation protect work when loading another map, creating a new map, or exiting.
+
+On desktop, choose a palette object and left-click a surface to place it. Switch to selection to pick an existing object. Hold right mouse to look with the editor camera, use **WASD/Q/E** to fly, **Shift** to move faster, and the mouse wheel to move closer or farther. The sidebar has editing, slot, and playtest controls. **Delete** removes the selected object, **R** rotates it, **Ctrl+D** duplicates, **Ctrl+Z/Ctrl+Y** undo/redo, and **Ctrl+S** saves to the selected slot.
+
+In a headset, use the paged editor panel with right aim/trigger for palette, selection, transform, history, save/load, and playtest controls. Close the panel to aim at the map, then use the trigger to place/select an object. **Right B** reopens the panel. While the panel is hidden, the left stick moves your editor view and the right stick adjusts height. Transform buttons move/resize the selected object without requiring a desktop keyboard.
+
+**Playtest** uses normal desktop walking/jumping or VR arm movement in your map. It has no timer, bots, or XP rewards. **F8 / right B** returns to editing; **R / right A** respawns in the clear starting area. Leaving the arena also respawns you. Save your map before closing the app. Exiting the editor restores the original forest and its collisions.
+
+Map slots are bounded JSON files under the game's local `user://maps` folder. They stay on the device, separately from account/profile data. Maps support at most 128 objects; the editor checks sizes, finite coordinates, rotated bounds, and a clear player spawn. Malformed or oversized files leave the current map intact. Local maps do not grant developer access.
+
 ## Developer access
 
 Only verified IDs in the title-owned developer list can use developer tools. There are no default developer accounts, first-player grants, or grants from names, pictures, XP, or registration.
@@ -158,14 +175,15 @@ godot --headless --xr-mode off --path quest-native --script tests/smoke_check.gd
 godot --headless --xr-mode off --path quest-native --script tests/developer_access_check.gd -- --play-mode=pcvr
 godot --headless --xr-mode off --path quest-native --script tests/error_codes_check.gd
 godot --headless --xr-mode off --path quest-native --script tests/registration_ui_check.gd
-godot --headless --xr-mode off --path quest-native --script tests/error_codes_check.gd
 godot --headless --xr-mode off --path quest-native --script tests/frontend_check.gd
-godot --headless --xr-mode off --path quest-native --script tests/features_check.gd
 godot --headless --xr-mode off --path quest-native --script tests/features_check.gd
 godot --headless --xr-mode off --path quest-native --script tests/profile_check.gd
 godot --headless --xr-mode off --path quest-native --script tests/tutorial_sound_check.gd
 godot --headless --xr-mode off --path quest-native --script tests/voice_check.gd
 godot --headless --xr-mode off --path quest-native --script tests/tag_mode_check.gd
+godot --headless --xr-mode off --path quest-native --script tests/map_document_check.gd
+godot --headless --xr-mode off --path quest-native --script tests/map_creator_check.gd
+godot --headless --xr-mode off --path quest-native --script tests/presentation_check.gd
 GODOT_BIN=/path/to/godot quest-native/tests/run_crossplay_check.sh
 GODOT_BIN=/path/to/godot quest-native/tests/run_tag_crossplay_check.sh
 GODOT_BIN=/path/to/godot quest-native/tests/run_voice_crossplay_check.sh

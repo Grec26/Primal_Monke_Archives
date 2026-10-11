@@ -4,7 +4,7 @@ extends Node
 const PORT := 7777
 const MAX_PLAYERS := 8
 const PROTOCOL := 2
-const GAME_VERSION := "0.6.0"
+const GAME_VERSION := "0.7.0"
 const STALE_MS := 2000
 const TAG_COOLDOWN_MS := 1250
 const PROFILE_INTERVAL_MS := 1000
@@ -193,7 +193,7 @@ func _hello(protocol: int, version: String) -> void:
 	var sender := multiplayer.get_remote_sender_id()
 	if sender <= 1: return
 	if protocol != PROTOCOL or version != GAME_VERSION:
-		_rejected.rpc_id(sender, "Version mismatch — install matching PC and Quest 0.6.0 builds")
+		_rejected.rpc_id(sender, "Version mismatch — install matching PC and Quest 0.7.0 builds")
 		return
 	if members.has(sender):
 		# Repeating a handshake cannot reset a member's pose or match score.

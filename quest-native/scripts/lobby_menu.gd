@@ -7,6 +7,7 @@ var is_open := false
 var toggle_key := KEY_TAB
 var toggle_hand := 1
 var toggle_button := "by_button"
+var allow_during_creation := false
 
 const PANEL_SIZE := Vector2(1.36, 1.82)
 const NORMAL_COLOR := Color("24483e")
@@ -87,6 +88,8 @@ func toggle() -> void:
 	set_open(not is_open)
 
 func set_open(value: bool) -> void:
+	if value and not allow_during_creation and is_instance_valid(game) and game.has_method("_map_creation_active") and game.call("_map_creation_active"):
+		return
 	if is_open == value:
 		return
 	is_open = value

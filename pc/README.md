@@ -4,7 +4,7 @@
 
 ## Start playing
 
-Version **0.6.0** adds updated menus, first-run registration, support error codes, picture uploads/PFPs, cosmetic levels, Player Tag, optional voice, tutorials, original audio, and a climbable treehouse. Startup loads the forest, then offers **Create account** or **Continue as guest** on first launch. Settings adds sound, mouse sensitivity, invert look, FOV, HUD, and fullscreen preferences. The forest adds cave/lookout routes, and the developer menu adds round and map testing controls. The main menu opens **Play solo**, **Multiplayer lobby**, **Account**, **Profile**, **Tutorial**, and **Voice**. **Resume game** continues an existing round without resetting it.
+The game includes updated menus, first-run registration, support error codes, picture uploads/PFPs, cosmetic levels, Player Tag, optional voice, tutorials, original audio, and a climbable treehouse. Startup loads the forest, then offers **Create account** or **Continue as guest** on first launch. Settings adds sound, mouse sensitivity, invert look, FOV, HUD, and fullscreen preferences. The forest adds cave/lookout routes, and the developer menu adds round and map testing controls. The main menu opens **Play solo**, **Multiplayer lobby**, **Account**, **Profile**, **Tutorial**, and **Voice**. **Resume game** continues an existing round without resetting it.
 
 Press **F1** for the main menu. **Tab** on desktop or right **B** in VR opens the main menu offline and the room menu online. In a waiting room, movement, tags, and the timer remain paused until the host chooses **Start match**.
 
@@ -35,6 +35,12 @@ In VR, push surfaces with tracked controllers to move and climb. Touch monkeys o
 
 Tutorial, Profile, and Voice are also available through the main menu in a headset. Tutorial exercises check movement, jumping/hand contact, and accepted tags; they can be skipped or replayed.
 
+## Map creator
+
+![Desktop map creator](screenshots/map-creator.png)
+
+Version **0.7.0** adds a local map creator, clearer menus, a new desktop HUD, forest sky, and loading screen polish. Choose **Map creator** from Main while offline. Place/edit five types of objects, undo/redo changes, save/load six slots, and playtest with normal movement. Desktop has a fly camera and numeric inspector; headset controls use a paged aim/trigger panel. **F8 / right B** returns from playtest. Custom maps stay on the device and do not join multiplayer rooms. [Map creator controls](../quest-native/README.md#map-creator).
+
 ## Accounts and profiles
 
 First launch offers **Create account** and **Continue as guest**. Gameplay works without sign-in. Guests remain offline unless they explicitly choose an account action. Returning registered players see **Sign in** again because passwords and session tickets are never saved.
@@ -51,7 +57,7 @@ The owner approves selected PlayFab IDs through title **1A7D9B**'s `PrimalMonkeD
 
 ## Play with Quest
 
-Use the matching **0.6.0** [Quest APK](../apk/README.md). Unity 2021.3.21f1 and WebXR remain separate single-player projects.
+Use the matching **0.7.0** [Quest APK](../apk/README.md). Unity 2021.3.21f1 and WebXR remain separate single-player projects.
 
 1. Connect PC and Quest to the same local network, then choose **Multiplayer lobby**.
 2. One device chooses **Host** and shares the local IPv4 address shown in its lobby. Other players enter it and choose **Join**.

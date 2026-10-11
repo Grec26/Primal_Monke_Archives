@@ -40,6 +40,9 @@ static func button(owner: Node, parent: Container, caption: String, action: Stri
 		elif state == "disabled": color = Color("203c2c")
 		elif state == "focus": color = Color.TRANSPARENT
 		var box := style(color, GREEN if state == "focus" else Color.TRANSPARENT, 10)
+		if state == "normal" and not primary:
+			box.border_color = Color("47614d")
+			box.set_border_width_all(1)
 		box.content_margin_left = 12
 		box.content_margin_right = 12
 		box.content_margin_top = 6
@@ -85,7 +88,7 @@ static func desktop_frame(owner: Node, name: String, layer: int, width: float) -
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_STOP
 	var shade := ColorRect.new()
-	shade.color = Color(0.02, 0.06, 0.035, 0.91)
+	shade.color = Color(0.025, 0.055, 0.04, 0.88)
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(shade)
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -104,7 +107,10 @@ static func desktop_frame(owner: Node, name: String, layer: int, width: float) -
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	scroll.add_child(center)
 	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", style(CARD, Color("456747"), 22))
+	var panel_style := style(CARD, Color("557557"), 22)
+	panel_style.shadow_color = Color(0.005, 0.02, 0.012, 0.32)
+	panel_style.shadow_size = 16
+	panel.add_theme_stylebox_override("panel", panel_style)
 	center.add_child(panel)
 	var margin := MarginContainer.new()
 	for side in ["left", "right", "top", "bottom"]:

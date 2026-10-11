@@ -115,10 +115,10 @@ func test_actual_controls(game: Node3D, settings: ScratchSettings) -> void:
 		await process_frame
 	settings.set_value("hud_visible", false)
 	await settle()
-	check(not game.desktop_label.visible and not game.board.visible, "HUD preference hides the actual desktop and world round overlays")
+	check(not game.desktop_label.visible and not game.board.visible and not game.presentation._canvas.visible, "HUD preference hides the actual desktop and world round overlays")
 	settings.set_value("hud_visible", true)
 	await settle()
-	check(game.desktop_label.visible and game.board.visible, "HUD preference restores both round overlays during play")
+	check(game.presentation._canvas.visible and not game.desktop_label.visible and not game.board.visible, "HUD preference restores the desktop card without duplicate round overlays")
 	game.return_to_main_menu()
 	check(not settings.can_set_fullscreen() and not game.settings_menu._action_enabled("fullscreen"), "headless settings disable unsupported fullscreen changes")
 	check(not game.voice.enabled and game.voice.mic_muted, "audio and display changes do not enable voice or unmute a microphone")

@@ -1,17 +1,17 @@
 {
   "file": "PrimalMonke-Windows.zip",
-  "bytes": 39490735,
-  "sha256": "9ed2b4f6a2e84331c270db1a2da760350e7d40cd16fe2f1cf23ce032a8faed41",
+  "bytes": 39558825,
+  "sha256": "033cf5158ca0112e3891b1be168daea5564ecd1dafb70c919756f866bda7ee4b",
   "executable": {
     "file": "PrimalMonke.exe",
-    "bytes": 108240320,
-    "sha256": "2f0e6f6cf4749b59351f474cb7f858e68c078db975373a3bfd5433dd807487a1",
+    "bytes": 108309624,
+    "sha256": "e9a171705ec46f015e52f94af4f3f9593532fe24d4f9c6ee155a5a0d4b96d934",
     "format": "PE32+",
     "architecture": "x86_64",
     "game_data_embedded": true,
     "codesigned": false
   },
-  "version": "0.6.0",
+  "version": "0.7.0",
   "engine": "Godot 4.6.3",
   "archive_integrity_verified": true,
   "archive_files": [
@@ -22,8 +22,8 @@
   ],
   "desktop_and_pcvr_launchers_verified": true,
   "launcher_line_endings": "CRLF",
-  "embedded_pack_resources": 85,
-  "embedded_pack_bytes": 3563444,
+  "embedded_pack_resources": 95,
+  "embedded_pack_bytes": 3632748,
   "embedded_pack_payload_md5_verified": true,
   "main_scene": "res://boot.tscn",
   "embedded_pack_account_developer_and_play_mode_resources_verified": true,
@@ -63,7 +63,7 @@
     256
   ],
   "embedded_pack_linux_headless_startup_passed": true,
-  "exact_embedded_pack_checks_passed": 1254,
+  "exact_embedded_pack_checks_passed": 1936,
   "native_smoke_checks_passed": 16,
   "feature_integration_checks_passed": 50,
   "registration_ui_mock_checks_passed": 80,
@@ -103,7 +103,10 @@
     "map_check": 143,
     "developer_tools_check": 142,
     "frontend_check": 49,
-    "tag_mode_check": 40
+    "tag_mode_check": 40,
+    "map_document_check": 240,
+    "map_creator_check": 416,
+    "presentation_check": 26
   },
   "error_code_checks_passed": 57,
   "profile_checks_passed": 94,
@@ -142,7 +145,7 @@
   "developer_tools_shared_controls_reject_clients_verified": true,
   "crossplay_integration": {
     "passed": true,
-    "scope": "Source game, three Linux headless processes",
+    "scope": "Current 0.7.0 source game, three Linux headless processes; desktop and simulated VR poses; synthetic voice",
     "peers": 3,
     "mixed_desktop_vr_poses": true,
     "transport": "ENet UDP",
@@ -153,21 +156,46 @@
   },
   "player_tag_integration": {
     "passed": true,
-    "scope": "Source game, three Linux headless processes",
+    "scope": "Current 0.7.0 source game, three Linux headless processes; desktop and simulated VR poses; synthetic voice",
     "peers": 3,
     "assertions_passed": 116,
     "host_authoritative": true
   },
   "voice_relay_integration": {
     "passed": true,
-    "scope": "Source game, three Linux headless processes",
+    "scope": "Current 0.7.0 source game, three Linux headless processes; desktop and simulated VR poses; synthetic voice",
     "peers": 3,
     "assertions_passed": 29,
     "synthetic_audio": true,
     "microphone_used": false
   },
-  "source_linux_graphical_menu_map_and_developer_tools_qa_passed": true,
-  "source_graphical_qa_assertions_passed": 39,
+  "embedded_pack_sha256": "4a10e1af19e8e2691ad445f3f098ed274b2f80dfd58da2d27db9816bb117f9a9",
+  "exact_embedded_pack_cold_start_checks_passed": 5,
+  "cold_threaded_boot_idle_account_and_muted_voice_verified": true,
+  "embedded_pack_map_document_custom_map_creator_menu_and_presentation_resources_verified": true,
+  "map_document_checks_passed": 240,
+  "map_creator_checks_passed": 416,
+  "game_presentation_checks_passed": 26,
+  "map_creator_offline_guest_access_and_connected_host_client_guards_verified": true,
+  "map_creator_local_slot_save_load_and_json_import_export_verified": true,
+  "map_creator_unsaved_cancel_save_discard_flows_verified": true,
+  "map_creator_safe_json_validation_and_bounded_history_verified": true,
+  "map_creator_placement_selection_inspector_undo_redo_verified": true,
+  "map_creator_desktop_and_simulated_vr_editor_playtest_return_verified": true,
+  "map_creator_playtest_awards_no_xp_verified": true,
+  "map_creator_real_collision_and_preset_traversal_verified": true,
+  "map_creator_max_objects": 128,
+  "map_creator_max_json_bytes": 262144,
+  "map_creator_local_save_slots": 6,
+  "map_creator_max_history": 64,
+  "presentation_sky_instanced_vegetation_and_untimed_map_hud_verified": true,
+  "presentation_instanced_boundary_vegetation_count": 48,
+  "presentation_keeps_existing_collisions_verified": true,
+  "source_network_checks_passed": 293,
+  "source_independent_creator_review_checks_passed": 106,
+  "source_independent_creator_review_hashes_match": true,
+  "source_linux_graphical_map_creator_and_presentation_qa_passed": true,
+  "source_graphical_qa_assertions_passed": 127,
   "source_graphical_qa_desktop_viewports": [
     [
       1280,
@@ -176,116 +204,201 @@
     [
       520,
       900
-    ],
-    [
-      520,
-      540
     ]
   ],
-  "source_graphical_qa_desktop_menus": [
+  "source_graphical_qa_desktop_flows": [
+    "loading",
     "main",
-    "settings",
-    "developer"
+    "creator_build",
+    "creator_inspector",
+    "creator_maps",
+    "unsaved_confirmation",
+    "map_playtest",
+    "return_to_editor",
+    "solo_hud"
   ],
   "source_graphical_qa_simulated_world_panels": [
-    "Settings",
-    "Developer round page",
-    "Developer map page"
+    "main",
+    "creator_pages_1_to_4",
+    "unsaved_confirmation",
+    "map_playtest"
   ],
-  "source_graphical_qa_map_views": [
-    "overview",
-    "canopy_loop",
-    "cave_approach",
-    "lookout_approach"
-  ],
-  "source_graphical_qa_screenshots": 26,
+  "source_graphical_qa_screenshots": 29,
+  "source_graphical_qa_unmocked_production_scripts_matched": 30,
+  "source_graphical_qa_mocked_provider": true,
   "source_graphical_qa_real_hardware_tested": false,
+  "source_creator_vr_caption_bounds_checks_passed": 55,
+  "source_creator_gui_consumes_mouse_clicks_before_world_input_verified": true,
   "previous_release_validation": {
-    "version": "0.5.1",
-    "commit": "f46b22badb12719719c563502e73af9ab8f165c4",
-    "scope": "Recorded checks for the previous release; separate from the current release verification.",
-    "exact_embedded_pack_checks_passed": 600,
-    "native_smoke_checks_passed": 16,
-    "feature_integration_checks_passed": 50,
-    "registration_ui_mock_checks_passed": 80,
-    "account_registration_access_and_play_mode_checks_passed": 289,
-    "frontend_checks_passed": 49,
-    "developer_button_checks_passed": 116,
-    "source_linux_graphical_developer_button_menu_qa_passed": true,
-    "source_linux_graphical_developer_button_menu_qa_menus": [
-      "main",
-      "account"
-    ],
-    "source_linux_graphical_developer_button_menu_qa_widths": [
-      1280,
-      520
-    ],
-    "source_simulated_world_developer_button_menu_qa_passed": true,
-    "source_developer_button_visual_qa_assertions_passed": 15
-  },
-  "historical_release_validation": {
-    "version": "0.5.0",
-    "commit": "e3af5ccdf454c4248361c4047c4c63937bbb652d",
-    "scope": "Recorded checks for the previous release; not rerun for the developer-button patch.",
-    "embedded_pack_linux_headless_startup_passed": true,
-    "exact_embedded_pack_checks_passed": 815,
-    "native_smoke_checks_passed": 16,
-    "feature_integration_checks_passed": 50,
-    "error_code_checks_passed": 57,
-    "account_registration_access_and_play_mode_checks_passed": 289,
-    "registration_ui_mock_checks_passed": 80,
-    "frontend_checks_passed": 49,
-    "profile_checks_passed": 94,
-    "voice_checks_passed": 76,
-    "tutorial_and_sound_checks_passed": 64,
-    "player_tag_checks_passed": 40,
-    "printable_ascii_keyboard_characters_verified": 95,
+    "version": "0.6.0",
+    "commit": "8bb9d5e89ad4efadf555c1f945f6c19957877dfd",
+    "scope": "Recorded validation of the previous release; separate from current 0.7.0 validation.",
+    "exact_embedded_pack_checks_passed": 1254,
+    "exact_embedded_pack_checks_by_suite": {
+      "smoke_check": 16,
+      "features_check": 50,
+      "error_codes_check": 57,
+      "registration_ui_check": 80,
+      "voice_check": 76,
+      "tutorial_sound_check": 64,
+      "profile_check": 94,
+      "developer_access_check": 289,
+      "developer_button_check": 116,
+      "settings_check": 38,
+      "map_check": 143,
+      "developer_tools_check": 142,
+      "frontend_check": 49,
+      "tag_mode_check": 40
+    },
     "crossplay_integration": {
       "passed": true,
+      "scope": "Source game, three Linux headless processes",
       "peers": 3,
       "mixed_desktop_vr_poses": true,
       "transport": "ENet UDP",
-      "assertions_passed": 129,
-      "staged_lobby_start_verified": true
+      "assertions_passed": 148,
+      "staged_lobby_start_verified": true,
+      "host_pause_resume_remote_propagation_verified": true,
+      "paused_nearby_tag_rejection_verified": true
     },
     "player_tag_integration": {
       "passed": true,
+      "scope": "Source game, three Linux headless processes",
       "peers": 3,
       "assertions_passed": 116,
       "host_authoritative": true
     },
     "voice_relay_integration": {
       "passed": true,
+      "scope": "Source game, three Linux headless processes",
       "peers": 3,
       "assertions_passed": 29,
       "synthetic_audio": true,
       "microphone_used": false
     },
-    "first_run_create_account_or_continue_as_guest_verified": true,
-    "returning_account_signin_onboarding_verified": true,
-    "safe_provider_errors_verified": true,
-    "unknown_numeric_provider_errors_verified": true,
-    "selected_account_mode_and_enter_submission_verified": true,
-    "live_noncreating_account_request_verified": true,
-    "live_noncreating_request_expected_error": "AccountNotFound",
-    "production_plain_json_transport_verified": true,
-    "production_http_accept_gzip": false,
-    "profile_picture_and_display_name_validation_verified": true,
-    "profile_pending_cosmetic_restart_verified": true,
-    "cloud_profile_request_shapes_mock_verified": true,
-    "cosmetic_xp_and_levels_verified": true,
-    "tutorial_practice_progression_verified": true,
-    "imported_qoa_audio_decoded_in_memory_verified": true,
-    "threaded_boot_loading_verified": true,
-    "staged_lobby_start_verified": true,
-    "cold_headset_menu_placement_simulation_verified": true,
-    "boot_player_camera_handoff_verified": true,
-    "source_linux_graphical_menu_qa_passed": true,
-    "source_linux_graphical_menu_qa_widths": [
-      1280,
-      960,
-      520
+    "source_linux_graphical_menu_map_and_developer_tools_qa_passed": true,
+    "source_graphical_qa_assertions_passed": 39,
+    "source_graphical_qa_desktop_viewports": [
+      [
+        1280,
+        900
+      ],
+      [
+        520,
+        900
+      ],
+      [
+        520,
+        540
+      ]
     ],
-    "source_world_profile_voice_and_tutorial_panel_qa_passed": true
-  }
+    "source_graphical_qa_desktop_menus": [
+      "main",
+      "settings",
+      "developer"
+    ],
+    "source_graphical_qa_simulated_world_panels": [
+      "Settings",
+      "Developer round page",
+      "Developer map page"
+    ],
+    "source_graphical_qa_map_views": [
+      "overview",
+      "canopy_loop",
+      "cave_approach",
+      "lookout_approach"
+    ],
+    "source_graphical_qa_screenshots": 26,
+    "source_graphical_qa_real_hardware_tested": false
+  },
+  "historical_release_validation": [
+    {
+      "version": "0.5.1",
+      "commit": "f46b22badb12719719c563502e73af9ab8f165c4",
+      "scope": "Recorded checks for the previous release; separate from the current release verification.",
+      "exact_embedded_pack_checks_passed": 600,
+      "native_smoke_checks_passed": 16,
+      "feature_integration_checks_passed": 50,
+      "registration_ui_mock_checks_passed": 80,
+      "account_registration_access_and_play_mode_checks_passed": 289,
+      "frontend_checks_passed": 49,
+      "developer_button_checks_passed": 116,
+      "source_linux_graphical_developer_button_menu_qa_passed": true,
+      "source_linux_graphical_developer_button_menu_qa_menus": [
+        "main",
+        "account"
+      ],
+      "source_linux_graphical_developer_button_menu_qa_widths": [
+        1280,
+        520
+      ],
+      "source_simulated_world_developer_button_menu_qa_passed": true,
+      "source_developer_button_visual_qa_assertions_passed": 15
+    },
+    {
+      "version": "0.5.0",
+      "commit": "e3af5ccdf454c4248361c4047c4c63937bbb652d",
+      "scope": "Recorded checks for the previous release; not rerun for the developer-button patch.",
+      "embedded_pack_linux_headless_startup_passed": true,
+      "exact_embedded_pack_checks_passed": 815,
+      "native_smoke_checks_passed": 16,
+      "feature_integration_checks_passed": 50,
+      "error_code_checks_passed": 57,
+      "account_registration_access_and_play_mode_checks_passed": 289,
+      "registration_ui_mock_checks_passed": 80,
+      "frontend_checks_passed": 49,
+      "profile_checks_passed": 94,
+      "voice_checks_passed": 76,
+      "tutorial_and_sound_checks_passed": 64,
+      "player_tag_checks_passed": 40,
+      "printable_ascii_keyboard_characters_verified": 95,
+      "crossplay_integration": {
+        "passed": true,
+        "peers": 3,
+        "mixed_desktop_vr_poses": true,
+        "transport": "ENet UDP",
+        "assertions_passed": 129,
+        "staged_lobby_start_verified": true
+      },
+      "player_tag_integration": {
+        "passed": true,
+        "peers": 3,
+        "assertions_passed": 116,
+        "host_authoritative": true
+      },
+      "voice_relay_integration": {
+        "passed": true,
+        "peers": 3,
+        "assertions_passed": 29,
+        "synthetic_audio": true,
+        "microphone_used": false
+      },
+      "first_run_create_account_or_continue_as_guest_verified": true,
+      "returning_account_signin_onboarding_verified": true,
+      "safe_provider_errors_verified": true,
+      "unknown_numeric_provider_errors_verified": true,
+      "selected_account_mode_and_enter_submission_verified": true,
+      "live_noncreating_account_request_verified": true,
+      "live_noncreating_request_expected_error": "AccountNotFound",
+      "production_plain_json_transport_verified": true,
+      "production_http_accept_gzip": false,
+      "profile_picture_and_display_name_validation_verified": true,
+      "profile_pending_cosmetic_restart_verified": true,
+      "cloud_profile_request_shapes_mock_verified": true,
+      "cosmetic_xp_and_levels_verified": true,
+      "tutorial_practice_progression_verified": true,
+      "imported_qoa_audio_decoded_in_memory_verified": true,
+      "threaded_boot_loading_verified": true,
+      "staged_lobby_start_verified": true,
+      "cold_headset_menu_placement_simulation_verified": true,
+      "boot_player_camera_handoff_verified": true,
+      "source_linux_graphical_menu_qa_passed": true,
+      "source_linux_graphical_menu_qa_widths": [
+        1280,
+        960,
+        520
+      ],
+      "source_world_profile_voice_and_tutorial_panel_qa_passed": true
+    }
+  ]
 }

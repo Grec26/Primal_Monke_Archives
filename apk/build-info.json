@@ -1,15 +1,15 @@
 {
   "file": "PrimalMonke-Quest.apk",
-  "bytes": 88899053,
-  "sha256": "b1781d7049248695545f9879dfede2cff3c9103ca3f796a3ed094cc307751d4b",
-  "resource_count": 87,
+  "bytes": 88968668,
+  "sha256": "6e5d821a6e75c0bdd9a3a5b5111630c156a47d1f7709b7c67f32774451317851",
+  "resource_count": 97,
   "audio_resources_verified": 8,
-  "required_feature_scripts_verified": 22,
+  "required_feature_scripts_verified": 27,
   "archive_integrity_verified": true,
   "packaged_features_and_account_resources_verified": true,
   "excluded_tests_and_build_helpers_verified": true,
-  "version": "0.6.0",
-  "version_code": 8,
+  "version": "0.7.0",
+  "version_code": 9,
   "package": "com.grec26.primalmonke",
   "min_sdk": 29,
   "target_sdk": 32,
@@ -112,6 +112,153 @@
     }
   ],
   "previous_release_validation": {
+    "version": "0.6.0",
+    "commit": "8bb9d5e89ad4efadf555c1f945f6c19957877dfd",
+    "scope": "Historical evidence for the previous download; separate from current verification.",
+    "packaged_game_checks_passed": {
+      "smoke_check": 16,
+      "features_check": 50,
+      "error_codes_check": 57,
+      "registration_ui_check": 80,
+      "voice_check": 76,
+      "tutorial_sound_check": 64,
+      "profile_check": 94,
+      "developer_access_check": 289,
+      "frontend_check": 49,
+      "tag_mode_check": 40,
+      "developer_button_check": 116,
+      "settings_check": 38,
+      "map_check": 143,
+      "developer_tools_check": 142
+    },
+    "packaged_game_checks_total": 1254,
+    "source_graphical_ui_and_map_qa": {
+      "checks_passed": 39,
+      "failures": 0,
+      "desktop_viewports": [
+        [
+          1280,
+          900
+        ],
+        [
+          520,
+          900
+        ],
+        [
+          520,
+          540
+        ]
+      ],
+      "world_panels": [
+        "Settings",
+        "Developer round page",
+        "Developer map page"
+      ],
+      "renderer": "Godot 4.6.3 Compatibility, Mesa llvmpipe, Xvfb :96",
+      "real_hardware_tested": false,
+      "visual_fixes_verified": [
+        "Settings cards fill available width",
+        "Canopy rest pad no longer z-fights",
+        "Larger route sign text"
+      ]
+    }
+  },
+  "packaged_game_checks_passed": {
+    "smoke_check": 16,
+    "features_check": 50,
+    "error_codes_check": 57,
+    "registration_ui_check": 80,
+    "voice_check": 76,
+    "tutorial_sound_check": 64,
+    "profile_check": 94,
+    "developer_access_check": 289,
+    "frontend_check": 49,
+    "tag_mode_check": 40,
+    "developer_button_check": 116,
+    "settings_check": 38,
+    "map_check": 143,
+    "developer_tools_check": 142,
+    "map_document_check": 240,
+    "map_creator_check": 416,
+    "presentation_check": 26
+  },
+  "packaged_game_checks_total": 1936,
+  "crossplay_integration": {
+    "passed": true,
+    "scope": "source Linux headless three-process ENet",
+    "peers": 3,
+    "protocol": 2,
+    "assertions_passed": 148,
+    "host_developer_pause_resume_and_tag_rejection_verified": true,
+    "version": "0.7.0"
+  },
+  "player_tag_integration": {
+    "passed": true,
+    "scope": "source Linux headless three-process ENet",
+    "peers": 3,
+    "assertions_passed": 116,
+    "version": "0.7.0"
+  },
+  "voice_integration": {
+    "passed": true,
+    "scope": "source Linux headless three-process ENet",
+    "peers": 3,
+    "synthetic_audio_only": true,
+    "assertions_passed": 29,
+    "version": "0.7.0"
+  },
+  "settings_enabled": true,
+  "settings_preferences_saved_locally": true,
+  "separate_effects_and_ambience_volume_verified": true,
+  "desktop_mouse_invert_fov_hud_and_fullscreen_settings_verified": true,
+  "voice_privacy_preserved_by_game_settings_verified": true,
+  "expanded_map_landmarks": [
+    "hub",
+    "treehouse",
+    "lookout",
+    "cave"
+  ],
+  "map_collision_solids": 88,
+  "map_shared_collision_surface_materials": 13,
+  "both_stair_routes_actual_desktop_jump_traversal_verified": true,
+  "developer_workshop_desktop_and_two_vr_pages_verified": true,
+  "developer_round_pause_bot_pace_end_round_host_authority_verified": true,
+  "room_scale_teleport_clearance_and_tracking_reset_verified": true,
+  "max_local_developer_map_pins": 8,
+  "max_local_developer_collision_bound_shapes": 128,
+  "developer_marker_and_bounds_revocation_cleanup_verified": true,
+  "source_graphical_ui_and_map_qa": {
+    "version": "0.7.0",
+    "checks_passed": 127,
+    "failures": 0,
+    "screenshots": 29,
+    "desktop_viewports": [
+      [
+        1280,
+        900
+      ],
+      [
+        520,
+        900
+      ]
+    ],
+    "world_panels": [
+      "Main",
+      "Map creator Build",
+      "Map creator Move",
+      "Map creator Size/color",
+      "Map creator Save/play",
+      "Unsaved confirmation"
+    ],
+    "renderer": "Godot 4.6.3 OpenGL Compatibility / Mesa llvmpipe, Xvfb :96",
+    "account_provider_mocked": true,
+    "production_source_scripts_sha256_match_fixture": 30,
+    "real_hardware_tested": false,
+    "mouse_event_consumption_checks_passed": 10,
+    "map_creator_vr_text_bound_checks_passed": 55,
+    "independent_creator_review_checks_passed": 106
+  },
+  "earlier_release_validation": {
     "version": "0.5.1",
     "commit": "f46b22badb12719719c563502e73af9ab8f165c4",
     "packaged_game_checks_passed": {
@@ -135,92 +282,36 @@
     "source_graphical_developer_button_qa_assertions_passed": 15,
     "source_simulated_vr_developer_button_qa_passed": true
   },
-  "packaged_game_checks_passed": {
-    "smoke_check": 16,
-    "features_check": 50,
-    "error_codes_check": 57,
-    "registration_ui_check": 80,
-    "voice_check": 76,
-    "tutorial_sound_check": 64,
-    "profile_check": 94,
-    "developer_access_check": 289,
-    "frontend_check": 49,
-    "tag_mode_check": 40,
-    "developer_button_check": 116,
-    "settings_check": 38,
-    "map_check": 143,
-    "developer_tools_check": 142
-  },
-  "packaged_game_checks_total": 1254,
-  "crossplay_integration": {
-    "passed": true,
-    "scope": "source Linux headless three-process ENet",
-    "peers": 3,
-    "protocol": 2,
-    "assertions_passed": 148,
-    "host_developer_pause_resume_and_tag_rejection_verified": true
-  },
-  "player_tag_integration": {
-    "passed": true,
-    "scope": "source Linux headless three-process ENet",
-    "peers": 3,
-    "assertions_passed": 116
-  },
-  "voice_integration": {
-    "passed": true,
-    "scope": "source Linux headless three-process ENet",
-    "peers": 3,
-    "synthetic_audio_only": true,
-    "assertions_passed": 29
-  },
-  "settings_enabled": true,
-  "settings_preferences_saved_locally": true,
-  "separate_effects_and_ambience_volume_verified": true,
-  "desktop_mouse_invert_fov_hud_and_fullscreen_settings_verified": true,
-  "voice_privacy_preserved_by_game_settings_verified": true,
-  "expanded_map_landmarks": [
-    "hub",
-    "treehouse",
-    "lookout",
-    "cave"
-  ],
-  "map_collision_solids": 88,
-  "map_shared_collision_surface_materials": 13,
-  "both_stair_routes_actual_desktop_jump_traversal_verified": true,
-  "developer_workshop_desktop_and_two_vr_pages_verified": true,
-  "developer_round_pause_bot_pace_end_round_host_authority_verified": true,
-  "room_scale_teleport_clearance_and_tracking_reset_verified": true,
-  "max_local_developer_map_pins": 8,
-  "max_local_developer_collision_bound_shapes": 128,
-  "developer_marker_and_bounds_revocation_cleanup_verified": true,
-  "source_graphical_ui_and_map_qa": {
-    "checks_passed": 39,
-    "failures": 0,
-    "desktop_viewports": [
-      [
-        1280,
-        900
-      ],
-      [
-        520,
-        900
-      ],
-      [
-        520,
-        540
-      ]
+  "cold_threaded_boot_pack_checks_passed": 5,
+  "local_map_creator": {
+    "enabled": true,
+    "developer_access_required": false,
+    "save_slots": 6,
+    "max_objects": 128,
+    "max_undo_history": 64,
+    "max_json_bytes": 262144,
+    "object_types": [
+      "platform",
+      "block",
+      "wall",
+      "tree",
+      "rock"
     ],
-    "world_panels": [
-      "Settings",
-      "Developer round page",
-      "Developer map page"
+    "presets": [
+      "blank",
+      "parkour",
+      "climb"
     ],
-    "renderer": "Godot 4.6.3 Compatibility, Mesa llvmpipe, Xvfb :96",
-    "real_hardware_tested": false,
-    "visual_fixes_verified": [
-      "Settings cards fill available width",
-      "Canopy rest pad no longer z-fights",
-      "Larger route sign text"
-    ]
-  }
+    "desktop_fly_camera_and_inspector": true,
+    "four_vr_tool_pages": true,
+    "atomic_local_save_and_load_verified": true,
+    "undo_redo_and_saved_baseline_discard_verified": true,
+    "playtest_without_timer_bots_or_xp_verified": true,
+    "map_collision_restoration_verified": true,
+    "custom_maps_in_multiplayer": false,
+    "map_creator_checks_passed": 416,
+    "map_document_checks_passed": 240
+  },
+  "updated_menu_hud_loading_and_forest_presentation_verified": true,
+  "presentation_checks_passed": 26
 }

@@ -2,7 +2,7 @@
 
 [Download PrimalMonke-Quest.apk](https://github.com/Grec26/Primal_Monke_Archives/raw/refs/heads/main/apk/PrimalMonke-Quest.apk)
 
-Native Godot OpenXR **0.6.0** test build for an ARM64 Quest headset, with arm-driven movement, updated menus/loading screens, a climbable forest/treehouse, original audio, and eight-player crossplay with the matching [Windows/PC VR build](../pc/README.md). Choose Co-op chase against five AI monkeys or multiplayer Player Tag. Settings saves sound and HUD preferences locally. The expanded map has a cave, lookout, and climbing routes. The updated developer menu adds round and map testing tools for approved accounts. Profiles add public names/PFPs and cosmetic levels; tutorials and opt-in voice are available from the main menu. Unity 2021.3.21f1 and WebXR remain separate single-player projects.
+Native Godot OpenXR **0.7.0** test build for an ARM64 Quest headset, with arm-driven movement, updated menus/loading screens, a climbable forest/treehouse, original audio, and eight-player crossplay with the matching [Windows/PC VR build](../pc/README.md). Choose Co-op chase against five AI monkeys or multiplayer Player Tag. Settings saves sound and HUD preferences locally. The expanded map has a cave, lookout, and climbing routes. The updated developer menu adds round and map testing tools for approved accounts. Profiles add public names/PFPs and cosmetic levels; tutorials and opt-in voice are available from the main menu. Unity 2021.3.21f1 and WebXR remain separate single-player projects.
 
 ## Install and play
 
@@ -21,6 +21,10 @@ On first launch, choose **Create account** or **Continue as guest**. Select **Pl
 Host a room or enter the host's IPv4 address with the keypad and choose **Join**. Use the same local network; connections use **UDP 7777**. The host selects **Co-op chase** or **Player Tag**, then **Start match**. Player Tag needs at least two players. [Full crossplay instructions](../quest-native/README.md#crossplay).
 
 Open **Voice** from the main menu. Voice starts **off** and the microphone starts **muted**. Enable voice to listen, then explicitly unmute to speak; Quest requests microphone permission at that point. Lobby voice reaches the room; game voice reaches players within **14 metres**. Volume and individual player mutes are available. Leaving the room or disabling voice stops capture/playback and mutes the mic.
+
+## Map creator
+
+Version **0.7.0** adds a local map creator, clearer menus, a new desktop HUD, forest sky, and loading screen polish. Choose **Map creator** from Main while offline. Place/edit five types of objects, undo/redo changes, save/load six slots, and playtest with normal movement. Desktop has a fly camera and numeric inspector; headset controls use a paged aim/trigger panel. **F8 / right B** returns from playtest. Custom maps stay on the device and do not join multiplayer rooms. [Map creator controls](../quest-native/README.md#map-creator).
 
 ## Accounts, profiles, and developer tools
 
