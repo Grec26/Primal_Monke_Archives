@@ -1,14 +1,25 @@
 {
   "file": "PrimalMonke-Quest.apk",
-  "bytes": 84738037,
-  "sha256": "344d6320780b9319e31e6c86ccf9f4822c052b36af87c013b603723ce5f7d2b0",
+  "bytes": 84764526,
+  "sha256": "7166b5cd773b5d854687b96849ee98833316d42b60b245e4ce1a1f19e449a688",
   "package": "com.grec26.primalmonke",
-  "version": "0.1.0",
+  "version": "0.2.0",
+  "version_code": 2,
   "engine": "Godot 4.6.3",
   "architecture": "arm64-v8a",
   "min_sdk": 29,
   "target_sdk": 32,
   "signing": "Android debug (APK Signature Scheme v2)",
+  "internet_permission_verified": true,
+  "archive_integrity_verified": true,
+  "native_library_16kb_alignment_verified": true,
+  "exported_resources_linux_headless_check_passed": true,
   "headset_playtested": false,
-  "native_smoke_checks_passed": 13
+  "native_smoke_checks_passed": 16,
+  "crossplay_integration": {
+    "passed": true,
+    "peers": 3,
+    "mixed_desktop_vr_poses": true,
+    "transport": "ENet UDP"
+  }
 }

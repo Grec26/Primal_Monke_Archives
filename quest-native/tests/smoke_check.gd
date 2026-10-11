@@ -22,6 +22,26 @@ func run() -> void:
 	for i in range(120): await physics_frame
 	check(game.player.global_position.y > -0.1, "player capsule stays above floor under gravity")
 	check(game.remaining < 90 and game.remaining > 85, "live native round countdown executes")
+	game.player.initialized = true
+	game.player.push_velocity = Vector3.ONE
+	game.lobby.set_open(true)
+	check(not game.player.initialized and game.player.push_velocity == Vector3.ZERO, "opening lobby clears locomotion anchors and launch momentum")
+	var move_event := InputEventKey.new()
+	move_event.keycode = KEY_W
+	move_event.physical_keycode = KEY_W
+	move_event.pressed = true
+	Input.parse_input_event(move_event)
+	await physics_frame
+	await physics_frame
+	var menu_position: Vector3 = game.player.global_position
+	var menu_time: float = game.remaining
+	for i in range(4): await physics_frame
+	check(not game.player.input_allowed and game.player.global_position.distance_to(menu_position) < 0.001, "desktop movement stays frozen while entering lobby address")
+	check(game.remaining == menu_time, "solo round pauses while lobby is open")
+	move_event.pressed = false
+	Input.parse_input_event(move_event)
+	game.lobby.set_open(false)
+	await physics_frame
 	game.player.xr_running = true
 	await physics_frame
 	await physics_frame

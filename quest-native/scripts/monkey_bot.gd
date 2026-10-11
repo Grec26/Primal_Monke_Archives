@@ -1,6 +1,8 @@
 extends CharacterBody3D
 
 var player: Node3D
+var chase_position := Vector3.ZERO
+var use_network_target := false
 var fur: StandardMaterial3D
 var tagged := false
 var active := true
@@ -24,7 +26,7 @@ func tag() -> void:
 func _physics_process(delta: float) -> void:
 	if not active or tagged: return
 	elapsed += delta
-	var away := global_position - player.global_position
+	var away := global_position - (chase_position if use_network_target else player.global_position)
 	away.y = 0
 	if elapsed >= next_choice:
 		if away.length() < 4.0: target = global_position + away.normalized() * 5.0

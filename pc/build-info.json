@@ -1,0 +1,29 @@
+{
+  "file": "PrimalMonke-Windows.zip",
+  "bytes": 35925292,
+  "sha256": "61603c010910ca6da0de5184dda534cbc45adb7f9b6bcabc1efd9692ca74f2d0",
+  "executable": {
+    "file": "PrimalMonke.exe",
+    "bytes": 104642688,
+    "sha256": "9f3073a6c238d9cb7b227b7f15ed1f352c42de90315321c23ae0148a95dcacfc",
+    "format": "PE32+",
+    "architecture": "x86_64",
+    "game_data_embedded": true,
+    "codesigned": false
+  },
+  "version": "0.2.0",
+  "engine": "Godot 4.6.3",
+  "archive_integrity_verified": true,
+  "embedded_pack_resources": 22,
+  "embedded_pack_payload_md5_verified": true,
+  "embedded_pack_linux_headless_startup_passed": true,
+  "native_smoke_checks_passed": 16,
+  "crossplay_integration": {
+    "passed": true,
+    "peers": 3,
+    "mixed_desktop_vr_poses": true,
+    "transport": "ENet UDP"
+  },
+  "windows_playtested": false,
+  "headset_playtested": false
+}

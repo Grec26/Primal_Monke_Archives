@@ -48,7 +48,10 @@ func resolve_hand(anchor: Vector3, desired: Vector3) -> Dictionary:
 
 func _physics_process(delta: float) -> void:
 	if not xr_running:
-		tracked = true
+		tracked = input_allowed
+		if not input_allowed:
+			velocity = Vector3.ZERO
+			return
 		var movement := Vector3.ZERO
 		if Input.is_physical_key_pressed(KEY_W): movement.z -= 1
 		if Input.is_physical_key_pressed(KEY_S): movement.z += 1
@@ -109,7 +112,7 @@ func _physics_process(delta: float) -> void:
 	if global_position.y < -10: reset_player()
 
 func _unhandled_input(event: InputEvent) -> void:
-	if xr_running: return
+	if xr_running or not input_allowed: return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED if event.pressed else Input.MOUSE_MODE_VISIBLE
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:

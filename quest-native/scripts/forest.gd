@@ -2,6 +2,16 @@ extends Node3D
 
 const PlayerScript = preload("res://scripts/arm_player.gd")
 const BotScript = preload("res://scripts/monkey_bot.gd")
+const SessionScript = preload("res://scripts/crossplay.gd")
+const LobbyScript = preload("res://scripts/lobby_menu.gd")
+var session: SessionScript
+var lobby: LobbyScript
+var network_status: String:
+	get: return session.status if session != null else "Solo"
+var session_address: String:
+	get: return session.address if session != null else ""
+var network_mode: String:
+	get: return session.mode if session != null else "offline"
 var player: PlayerScript
 var bots: Array[BotScript] = []
 var board: Label3D
@@ -113,6 +123,33 @@ func _ready() -> void:
 	add_child(overlay)
 	overlay.visible = not player.xr_running
 	restart()
+	session = SessionScript.new()
+	session.name = "Crossplay"
+	session.game = self
+	add_child(session)
+	lobby = LobbyScript.new()
+	lobby.name = "LobbyMenu"
+	lobby.game = self
+	add_child(lobby)
+
+func host_session() -> void:
+	session.host()
+	if session.is_host(): lobby.set_open(false)
+
+func join_session(address: String) -> void:
+	session.join(address)
+
+func leave_session() -> void:
+	session.leave()
+
+func is_session_host() -> bool:
+	return session != null and session.is_host()
+
+func request_restart() -> void:
+	if session != null and session.is_client():
+		session.status = "Only the host can restart the shared round"
+		return
+	restart()
 
 func create_player() -> void:
 	player = PlayerScript.new()
@@ -176,14 +213,17 @@ func create_bots() -> void:
 		bots.append(bot)
 
 func restart() -> void:
+	if session != null and session.is_client(): return
 	remaining = 90
 	score = 0
 	finished = false
 	player.reset_player()
 	for bot in bots: bot.reset_bot()
 	last_board = ""
+	if session != null: session.round_restarted()
 
 func tag_bot(bot: BotScript) -> void:
+	if session != null and session.is_client(): return
 	if finished or bot.tagged: return
 	bot.tag()
 	score += 1
@@ -191,27 +231,41 @@ func tag_bot(bot: BotScript) -> void:
 
 func _physics_process(delta: float) -> void:
 	if player == null: return
-	player.input_allowed = xr_focused
+	player.input_allowed = xr_focused and (lobby == null or not lobby.is_open)
 	var pressed: bool = (xr_focused and player.hands[1].is_button_pressed("ax_button")) if player.xr_running else Input.is_physical_key_pressed(KEY_R)
-	if pressed and not restart_held: restart()
+	if pressed and not restart_held and player.input_allowed: request_restart()
 	restart_held = pressed
-	var active: bool = player.tracked and xr_focused
-	for bot in bots: bot.active = active and not finished
-	if active and not finished:
+	var poses: Array = session.participant_poses() if session != null else []
+	var active := not poses.is_empty()
+	var authority := session == null or not session.is_client()
+	for bot in bots:
+		bot.active = authority and active and not finished
+		bot.use_network_target = session != null and session.is_host()
+		if bot.use_network_target:
+			var closest := INF
+			for pose in poses:
+				var distance: float = bot.global_position.distance_squared_to(pose.head)
+				if distance < closest:
+					closest = distance
+					bot.chase_position = pose.head
+	if authority and active and not finished:
 		remaining = maxf(0, remaining - delta)
 		for bot in bots:
 			if bot.tagged: continue
 			var target: Vector3 = bot.global_position + Vector3.UP * 0.7
-			if player.xr_running:
-				for visual in player.hand_visuals:
-					if visual.global_position.distance_to(target) < 0.65: tag_bot(bot)
-			elif Input.is_physical_key_pressed(KEY_E) and player.head.global_position.distance_to(target) < 1.7:
-				tag_bot(bot)
+			for pose in poses:
+				if pose.vr:
+					if pose.left.distance_to(target) < 0.65 or pose.right.distance_to(target) < 0.65: tag_bot(bot)
+				elif pose.tag and pose.head.distance_to(target) < 1.7: tag_bot(bot)
 		if remaining <= 0: finished = true
 	var title := "ALL MONKEYS TAGGED!" if score == 5 else ("TIME'S UP!" if finished else "FOREST CHASE")
-	var status := "Push surfaces to move. Touch monkeys to tag.\nRight A: restart" if active else "Tracking paused: headset + both controllers required"
+	var status := "Push surfaces to move. Touch monkeys to tag." if player.xr_running else "WASD / right mouse: look / Space / E: tag"
+	if not active: status = "Paused — close menu / restore headset + controller tracking"
+	status += "\nRight B / Tab: multiplayer menu · " + network_mode
+	if session != null and session.is_client(): status += " · Host restarts"
+	else: status += " · Right A / R: restart"
 	var text := "PRIMAL MONKE\n%s\n%s / 5 TAGGED     %ss\n%s" % [title, score, ceili(remaining), status]
 	if text != last_board:
 		board.text = text
-		desktop_label.text = text + "\nDesktop: WASD / hold right mouse to look / Space / E to tag / R"
+		desktop_label.text = text
 		last_board = text

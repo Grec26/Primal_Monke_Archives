@@ -1,8 +1,8 @@
 # Primal Monke — Forest Chase
 
-**Quest test APK:** [Download PrimalMonke-Quest.apk](https://github.com/Grec26/Primal_Monke_Archives/raw/refs/heads/main/apk/PrimalMonke-Quest.apk). This native Godot OpenXR port is built and signed; headset play remains untested. [Install and build details](apk/README.md).
+**PC + Quest crossplay (0.2.0):** [Windows download — ZIP containing PrimalMonke.exe](https://github.com/Grec26/Primal_Monke_Archives/raw/refs/heads/main/pc/PrimalMonke-Windows.zip) · [Quest APK](https://github.com/Grec26/Primal_Monke_Archives/raw/refs/heads/main/apk/PrimalMonke-Quest.apk). These matching native Godot builds share a co-op forest round with up to eight players. [Crossplay instructions](quest-native/README.md#crossplay).
 
-An original single-player Unity VR tag prototype inspired by arm-driven locomotion. Includes a climbable forest, five fleeing AI monkeys, and a 90-second round. No Gorilla Tag assets or code are used. Multiplayer is not implemented.
+An original tag prototype inspired by arm-driven locomotion. Includes a climbable forest, five fleeing AI monkeys, and a 90-second round. No Gorilla Tag assets or code are used. The Unity project below and the WebXR version are single-player; crossplay is implemented in the separate [`quest-native/`](quest-native/README.md) port used by the downloadable PC and Quest builds.
 
 A separate **WebXR browser version** is available in [`web/`](web/README.md). It supports headset controllers and an on-screen mode without modifying the Unity project.
 
@@ -30,7 +30,7 @@ Enable developer mode on your Quest, connect it over USB, authorize debugging in
 adb install -r Builds/Android/PrimalMonke.apk
 ```
 
-Launch **Primal Monke Forest Chase** from the headset's Unknown Sources apps. A Unity installation with Android Build Support and an activated license is required to produce the APK. No APK has been compiled in this cloud workspace.
+Launch **Primal Monke Forest Chase** from the headset's Unknown Sources apps. A Unity installation with Android Build Support and an activated license is required to produce this Unity APK. The downloadable APK above is built from the separate native Godot port; a Unity APK has not been compiled in this workspace.
 
 ## Controls
 
