@@ -22,12 +22,24 @@ Push the floor, trunks, branches, or rocks to move; brace and pull to climb, and
 
 ## Build and host
 
+### GitHub Pages website
+
+The repository includes an automatic deployment workflow in `.github/workflows/pages.yml`.
+
+1. Open [repository Pages settings](https://github.com/Grec26/Primal_Monke_Archives/settings/pages).
+2. Under **Build and deployment → Source**, select **GitHub Actions**.
+3. Open [the deployment workflow](https://github.com/Grec26/Primal_Monke_Archives/actions/workflows/pages.yml), choose **Run workflow**, and select `main`.
+
+After a successful deployment, the website will be at **https://grec26.github.io/Primal_Monke_Archives/**. Future changes to `web/` on `main` redeploy automatically. The workflow runs the game logic tests, builds the site with relative asset paths for the repository subdirectory, and publishes only the web build. GitHub Pages provides HTTPS for headset access. Initial Pages activation and the live URL have not been verified from the cloud workspace.
+
+### Other static hosts
+
 ```sh
 cd web
 npm run build
 ```
 
-Upload the **contents of `web/dist`** to an HTTPS static host, preserving the `assets` directory. Relative asset paths allow subdirectory hosting. For itch.io HTML5 hosting, zip the contents with `index.html` at the ZIP root. Embedded WebXR requires the host iframe to allow `xr-spatial-tracking`; if immersive VR is unavailable in the embed, use a standalone HTTPS host. No deployment is included in this repository update.
+Upload the **contents of `web/dist`** to an HTTPS static host, preserving the `assets` directory. Relative asset paths allow subdirectory hosting. For itch.io HTML5 hosting, zip the contents with `index.html` at the ZIP root. Embedded WebXR requires the host iframe to allow `xr-spatial-tracking`; if immersive VR is unavailable in the embed, use a standalone HTTPS host.
 
 ## Checks
 
