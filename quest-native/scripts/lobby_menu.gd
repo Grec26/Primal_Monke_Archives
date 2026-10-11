@@ -263,7 +263,10 @@ func _process(_delta: float) -> void:
 			_hovered = next_hover
 			_update_button_colors()
 		if trigger and not _trigger_held and _hovered >= 0:
-			_dispatch(_world_buttons[_hovered]["action"])
+			var action: String = _world_buttons[_hovered]["action"]
+			if _action_enabled(action) and is_instance_valid(game) and game.has_method("play_ui_sound") and game.get("tutorial") != self:
+				game.call("play_ui_sound", "click")
+			_dispatch(action)
 	_trigger_held = trigger
 
 func _trigger_pressed(controller: XRController3D) -> bool:

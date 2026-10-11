@@ -8,7 +8,9 @@ const TEST_IDENTITY := "PM-0123456789abcdef0123456789abcdef0123456789abcdef01234
 const TEST_USERNAME := "test_player"
 const TEST_EMAIL := "player@example.invalid"
 const TEST_PASSWORD := "  test-only-password  "
+const PRIVATE_RESPONSE_MARKER := "PM_PRIVATE_RESPONSE_MARKER_4a921d"
 const ModeScript = preload("res://scripts/play_mode.gd")
+const AccountScript = preload("res://scripts/playfab_account.gd")
 var failures := 0
 
 class MockAccount:
@@ -46,7 +48,7 @@ class StorageAccount:
 		return {"ok": false}
 
 func _initialize() -> void:
-	call_deferred("run")
+	call_deferred("private_response_probe" if OS.get_cmdline_user_args().has("--privacy-probe") else "run")
 
 func check(condition: bool, label: String) -> void:
 	if condition: print("PASS: " + label)
@@ -98,13 +100,223 @@ func wait_blocked(account: MockAccount) -> void:
 func run() -> void:
 	await test_identity_and_role_proof()
 	await test_private_identity_storage()
+	test_account_validation()
+	await test_provider_response_handling()
+	await test_registration_provider_errors()
 	await test_registration_and_credentials()
+	await test_verified_usernames()
+	await test_profile_request_guards()
+	test_private_response_logging()
 	await test_credential_generation_guards()
 	await test_async_generation_guards()
 	test_play_mode_selection()
 	await test_game_handlers()
 	print("Developer access checks complete; failures: %s" % failures)
 	quit(0 if failures == 0 else 1)
+
+func private_response_probe() -> void:
+	var account := fresh_account()
+	var malformed := ("{\"errorMessage\": " + PRIVATE_RESPONSE_MARKER + "}").to_utf8_buffer()
+	var reply: Dictionary = account._decode_response(HTTPRequest.RESULT_SUCCESS, 200, malformed)
+	quit(0 if reply == {"ok": false, "error": "InvalidResponse"} else 1)
+
+func test_private_response_logging() -> void:
+	# An isolated process lets this test inspect stdout and stderr without ever
+	# echoing the potentially private response token into the parent test log.
+	var output: Array = []
+	var arguments := PackedStringArray(["--headless", "--xr-mode", "off", "--path", ProjectSettings.globalize_path("res://"), "--script", "res://tests/developer_access_check.gd", "--", "--privacy-probe"])
+	var exit_code := OS.execute(OS.get_executable_path(), arguments, output, true)
+	check(exit_code == 0 and not "\n".join(output).contains(PRIVATE_RESPONSE_MARKER), "malformed provider response is rejected without logging its private token to stdout or stderr")
+
+func test_verified_usernames() -> void:
+	var account := fresh_account()
+	account.replies = credential_replies(PLAYER_ID, "verified_signup", "[]")
+	account.replies[0].data["Username"] = "unverified_response"
+	await account.register(TEST_USERNAME, TEST_EMAIL, TEST_PASSWORD)
+	check(account.username == "verified_signup" and account.has_credentials, "signup username comes from authenticated account proof, never submitted or response username")
+	account.sign_out()
+	check(account.username.is_empty(), "logout clears authenticated username")
+	account.replies = credential_replies(PLAYER_ID, "verified_login", "[]")
+	await account.login_credentials(TEST_USERNAME, TEST_PASSWORD)
+	check(account.username == "verified_login", "credential login exposes only provider-verified username")
+	account.replies = login_replies(PLAYER_ID, "[]")
+	await account.login_device()
+	check(account.username.is_empty() and not account.has_credentials, "anonymous account switch cannot retain former registered username")
+	account.replies = [{"ok": true, "data": {"Username": "unverified_upgrade"}}, proof(PLAYER_ID, "verified_upgrade"), permissions("[]")]
+	await account.register(TEST_USERNAME, TEST_EMAIL, TEST_PASSWORD)
+	check(account.username == "verified_upgrade" and account.has_credentials and account.account_id == PLAYER_ID, "anonymous upgrade stores authenticated username on account rather than shadowed argument")
+	account.replies = [proof(PLAYER_ID, "verified_refresh"), permissions("[]")]
+	await account.refresh_permissions()
+	check(account.username == "verified_refresh", "account refresh updates username from freshly authenticated proof")
+	account.replies = [proof(DEV_ID, "untrusted_other")]
+	await account.refresh_permissions()
+	check(account.username.is_empty() and not account.is_signed_in(), "failed account ownership proof clears verified username")
+	await account.register("ab", TEST_EMAIL, TEST_PASSWORD)
+	check(account.error_code == "PM-A01" and account.status.contains("[PM-A01]"), "invalid signup details show stable validation code alongside explanation")
+	account.replies = [credential_replies(PLAYER_ID, TEST_USERNAME, "[]")[0], proof(DEV_ID, TEST_USERNAME)]
+	await account.register(TEST_USERNAME, TEST_EMAIL, TEST_PASSWORD)
+	check(account.error_code == "PM-A02" and account.status.contains("[PM-A02]"), "failed signup ownership proof shows stable verification code")
+	account.replies = [{"ok": false, "error": "InvalidEmailOrPassword"}]
+	await account.login_credentials(TEST_EMAIL, TEST_PASSWORD)
+	check(account.error_code == "PF-1142" and account.status.contains("[PF-1142]"), "email credential rejection displays official provider code")
+	account.replies = credential_replies(PLAYER_ID, TEST_USERNAME, "[]")
+	await account.login_credentials(TEST_EMAIL, TEST_PASSWORD)
+	check(account.error_code.is_empty() and not account.status.contains("PF-1142"), "successful authenticated login clears stale visible error code")
+	account.queue_free()
+	await process_frame
+
+func capture_profile_request(account: MockAccount, api: String, payload: Dictionary, observed: Array[Dictionary]) -> void:
+	observed.append(await account.client_request(api, payload))
+
+func test_profile_request_guards() -> void:
+	var account := fresh_account()
+	var reply: Dictionary = await account.client_request("GetUserData", {"Keys": ["PrimalMonkeProfile"]})
+	check(reply == {"ok": false, "error": "AccountNotFound"} and account.calls.is_empty(), "unsigned profile read never reaches provider or exposes data")
+	account.replies = credential_replies(PLAYER_ID, TEST_USERNAME, "[]")
+	await account.login_credentials(TEST_USERNAME, TEST_PASSWORD)
+	account.calls.clear()
+	for api in ["SetTitleData", "GetTitleData", "Admin/SetTitleData", "Server/SetTitleData", "GetUserInternalData", "UpdateUserInternalData", "ExecuteCloudScript", "LoginWithCustomID", "RegisterPlayFabUser"]:
+		reply = await account.client_request(api, {"Data": {"PrimalMonkeDeveloperIds": JSON.stringify([PLAYER_ID])}})
+		check(reply == {"ok": false, "error": "NotAuthorizedByTitle"} and account.calls.is_empty() and not account.is_developer(), "profile gateway rejects role, privileged or auth endpoint: " + api)
+	for id in [DEV_ID, 1234, {"PlayFabId": PLAYER_ID}]:
+		reply = await account.client_request("GetUserData", {"PlayFabId": id, "Keys": ["PrimalMonkeProfile"]})
+		check(reply == {"ok": false, "error": "NotAuthorizedByTitle"} and account.calls.is_empty(), "profile read rejects foreign or malformed account lookup before provider")
+	var profile_payloads := {
+		"GetUserData": {"Keys": ["PrimalMonkeProfile"], "PlayFabId": PLAYER_ID},
+		"UpdateUserData": {"Data": {"PrimalMonkeProfile": "{\"fur\":\"brown\"}", "PrimalMonkeDeveloperIds": JSON.stringify([PLAYER_ID])}, "Permission": "Private"},
+		"UpdateUserTitleDisplayName": {"DisplayName": DEV_ID}
+	}
+	for api in profile_payloads:
+		var expected := {"ok": true, "data": {"Version": 1}}
+		account.replies = [expected]
+		reply = await account.client_request(api, profile_payloads[api])
+		check(reply == expected and account.calls.back().api == api and account.calls.back().ticket == TEST_TICKET and account.calls.back().payload == profile_payloads[api], "allowed own-profile request uses captured authenticated ticket: " + api)
+		check(account.account_id == PLAYER_ID and account.username == TEST_USERNAME and not account.is_developer(), "profile changes including developer-looking names cannot change account identity or role: " + api)
+	for api in ["GetUserData", "UpdateUserData", "UpdateUserTitleDisplayName"]:
+		account.replies = [{"ok": true, "data": {"PrivateProfile": "former-account-only"}}]
+		account.suspend_api = api
+		var observed: Array[Dictionary] = []
+		capture_profile_request(account, api, {}, observed)
+		await wait_blocked(account)
+		account.sign_out()
+		account.release_reply.emit()
+		await settle()
+		check(observed == [{"ok": false, "error": "AccountChanged"}] and account.username.is_empty() and not account.is_signed_in(), "logout discards late private profile result and clears identity: " + api)
+		account.replies = credential_replies(PLAYER_ID, TEST_USERNAME, "[]")
+		await account.login_credentials(TEST_USERNAME, TEST_PASSWORD)
+	account.replies = [{"ok": true, "data": {"PrivateProfile": "former-account-only"}}]
+	account.suspend_api = "GetUserData"
+	var observed: Array[Dictionary] = []
+	capture_profile_request(account, "GetUserData", {}, observed)
+	await wait_blocked(account)
+	account.sign_out()
+	account.replies = credential_replies(DEV_ID, "verified_developer", JSON.stringify([DEV_ID]))
+	await account.login_credentials("verified_developer", TEST_PASSWORD)
+	account.release_reply.emit()
+	await settle()
+	check(observed == [{"ok": false, "error": "AccountChanged"}] and account.account_id == DEV_ID and account.username == "verified_developer" and account.is_developer(), "new authenticated login prevents former player's profile result from crossing account boundary")
+	account.queue_free()
+	await process_frame
+
+func test_account_validation() -> void:
+	for email in ["s@example.com", "susan@example.com", "monke+vr@sub.example.com", "dev@example.game", " first.last@example.com "]:
+		check(AccountScript.registration_error(TEST_USERNAME, email, TEST_PASSWORD).is_empty(), "ordinary email passes signup validation: " + email.strip_edges())
+	for email in ["", "no-domain", "a@@example.com", "a b@example.com", "a@b", "a@b..com", "a@.example.com", "a@example.com.", "a\n@example.com"]:
+		check(not AccountScript.registration_error(TEST_USERNAME, email, TEST_PASSWORD).is_empty(), "invalid email is rejected before signup: " + email.replace("\n", "\\n"))
+	check(AccountScript.registration_error(" " + TEST_USERNAME + " ", " " + TEST_EMAIL + " ", " " + "a".repeat(5)).is_empty(), "signup validation trims identifiers and preserves password whitespace")
+	check(not AccountScript.registration_error(TEST_USERNAME, TEST_EMAIL, "a".repeat(101)).is_empty(), "signup validation rejects password above provider limit")
+	check(AccountScript.login_error(" " + TEST_EMAIL + " ", TEST_PASSWORD).is_empty(), "existing email login accepts trimmed identifier and exact password")
+	check(AccountScript.login_error(" " + TEST_USERNAME + " ", TEST_PASSWORD).is_empty(), "existing username login accepts trimmed identifier")
+	check(not AccountScript.login_error("a b@example.com", TEST_PASSWORD).is_empty(), "email login rejects internal whitespace before requesting provider")
+	check(not AccountScript.login_error(TEST_USERNAME, "short").is_empty(), "credential login validation rejects short password")
+
+func provider_body(value: Variant) -> PackedByteArray:
+	return JSON.stringify(value).to_utf8_buffer()
+
+func test_provider_response_handling() -> void:
+	var account := fresh_account()
+	var private_detail := "private-detail-never-display"
+	var private_values := [private_detail, TEST_EMAIL, TEST_TICKET, TEST_PASSWORD, TEST_IDENTITY]
+	var success_data := {"PlayFabId": PLAYER_ID, "SessionTicket": TEST_TICKET}
+	var decoded: Dictionary = account._decode_response(HTTPRequest.RESULT_SUCCESS, 200, provider_body({"code": 200, "status": "OK", "data": success_data, "errorMessage": private_detail}))
+	check(decoded == {"ok": true, "data": success_data}, "successful PlayFab envelope retains required private auth data internally and drops outer response fields")
+	var error_names := ["EmailAddressNotAvailable", "UsernameNotAvailable", "InvalidUsernameOrPassword", "AccountNotFound", "PlayerCreationDisabled", "InvalidTitleId", "APINotEnabledForGameClientAccess", "InvalidParams", "InvalidEmailAddress", "AccountAlreadyLinked", "AccountAlreadyExists", "NameNotAvailable", "InvalidPassword", "InvalidUsername", "ServiceUnavailable", "RequestLimitExceeded", "DuplicateEmail", "DuplicateUsername", "InvalidEmailOrPassword", "APIRequestLimitExceeded", "APIConcurrentRequestLimitExceeded", "AccountBanned", "NotAuthorizedByTitle"]
+	for identifier in error_names:
+		var error_body := {"code": 400, "error": identifier, "errorMessage": " ".join(private_values), "errorDetails": {"Email": [TEST_EMAIL], "Password": [TEST_PASSWORD]}, "data": success_data}
+		decoded = account._decode_response(HTTPRequest.RESULT_SUCCESS, 400, provider_body(error_body))
+		check(decoded == {"ok": false, "error": identifier}, "provider error retains only recognized safe identifier: " + identifier)
+		var message: String = account._error_message(decoded, "RegisterPlayFabUser")
+		check(not message.is_empty() and private_values.all(func(value): return not message.contains(value)), "local provider message strips body details, credential and ticket: " + identifier)
+	decoded = account._decode_response(HTTPRequest.RESULT_SUCCESS, 403, provider_body({"code": 403, "error": "APINotEnabledForGameClientAccess", "errorMessage": private_detail}))
+	check(decoded == {"ok": false, "error": "APINotEnabledForGameClientAccess"}, "HTTP 403 preserves actionable API policy identifier without response text")
+	for identifier in ["UnrecognizedProviderFailure", "EmailAddressNotAvailable\n" + TEST_EMAIL, "x".repeat(1024), "", 1006, {"Email": TEST_EMAIL}, [TEST_EMAIL]]:
+		decoded = account._decode_response(HTTPRequest.RESULT_SUCCESS, 400, provider_body({"code": 400, "error": identifier, "errorMessage": private_detail, "data": success_data}))
+		check(decoded == {"ok": false, "error": "ProviderRejected"}, "unknown or malformed provider error never reflects arbitrary fields")
+	decoded = account._decode_response(HTTPRequest.RESULT_SUCCESS, 400, provider_body({"code": 400, "error": "UnrecognizedProviderFailure", "errorCode": 5847, "errorMessage": " ".join(private_values), "errorDetails": {"Password": [TEST_PASSWORD]}, "data": success_data}))
+	check(decoded == {"ok": false, "error": "ProviderRejected", "provider_code": 5847}, "unknown numeric provider code 5847 is preserved without inventing error meaning or keeping details")
+	var diagnostic: String = account._error_message(decoded, "LoginWithPlayFab")
+	check(diagnostic.contains("5847") and private_values.all(func(value): return not diagnostic.contains(value)), "unknown-code diagnostic shows bounded number and strips provider messages and credentials")
+	for numeric_code in [null, "5847", -5847, 0, 999, 1000000, 5847.25, true, {"Code": 5847}, [5847]]:
+		decoded = account._decode_response(HTTPRequest.RESULT_SUCCESS, 400, provider_body({"code": 400, "error": "Unknown", "errorCode": numeric_code, "errorMessage": private_detail}))
+		check(decoded == {"ok": false, "error": "ProviderRejected"}, "unsafe or out-of-range numeric diagnostics are discarded")
+	for value in [null, [], {"code": 200}, {"code": 200, "data": []}, {"code": "200", "data": success_data}, {"code": 400, "error": "EmailAddressNotAvailable", "data": success_data}, {"data": success_data}]:
+		decoded = account._decode_response(HTTPRequest.RESULT_SUCCESS, 200, provider_body(value))
+		check(decoded == {"ok": false, "error": "InvalidResponse"}, "malformed HTTP 200 envelope cannot become authenticated success")
+	decoded = account._decode_response(HTTPRequest.RESULT_SUCCESS, 200, "not-json".to_utf8_buffer())
+	check(decoded == {"ok": false, "error": "InvalidResponse"}, "non-JSON HTTP 200 is an invalid provider response")
+	decoded = account._decode_response(HTTPRequest.RESULT_SUCCESS, 400, PackedByteArray())
+	check(decoded == {"ok": false, "error": "ProviderRejected"}, "empty HTTP 400 safely rejects signup without raw body")
+	decoded = account._decode_response(HTTPRequest.RESULT_SUCCESS, 403, provider_body({"code": 200, "data": success_data}))
+	check(decoded == {"ok": false, "error": "ProviderRejected"}, "successful JSON envelope on HTTP 403 cannot authenticate")
+	for status in [429, 500, 503]:
+		decoded = account._decode_response(HTTPRequest.RESULT_SUCCESS, status, "upstream-error".to_utf8_buffer())
+		check(decoded == {"ok": false, "error": "RequestLimitExceeded" if status == 429 else "ServiceUnavailable"}, "HTTP %s has actionable retry fallback even without JSON" % status)
+	var transport_cases := {
+		HTTPRequest.RESULT_TIMEOUT: "Timeout",
+		HTTPRequest.RESULT_CANT_RESOLVE: "Connection",
+		HTTPRequest.RESULT_CANT_CONNECT: "Connection",
+		HTTPRequest.RESULT_CONNECTION_ERROR: "Connection",
+		HTTPRequest.RESULT_TLS_HANDSHAKE_ERROR: "TLS",
+		HTTPRequest.RESULT_BODY_SIZE_LIMIT_EXCEEDED: "InvalidResponse",
+		HTTPRequest.RESULT_CHUNKED_BODY_SIZE_MISMATCH: "InvalidResponse"
+	}
+	for result in transport_cases:
+		decoded = account._decode_response(result, 200, provider_body({"code": 200, "data": success_data}))
+		check(decoded == {"ok": false, "error": transport_cases[result]}, "failed transport takes precedence over successful-looking provider envelope: " + transport_cases[result])
+	account.queue_free()
+	await process_frame
+
+func test_registration_provider_errors() -> void:
+	var account := fresh_account()
+	for duplicate in [["EmailAddressNotAvailable", "email"], ["UsernameNotAvailable", "username"]]:
+		account.calls.clear()
+		account.replies = [{"ok": false, "error": duplicate[0]}]
+		await account.register(TEST_USERNAME, TEST_EMAIL, TEST_PASSWORD)
+		var status := account.status.to_lower()
+		check(account.calls.size() == 1 and not account.is_signed_in() and not account.busy and status.contains(duplicate[1]) and status.contains("in use"), "duplicate " + duplicate[1] + " signup explains conflict without signing in")
+	account.replies = [{"ok": false, "error": "PlayerCreationDisabled"}]
+	await account.login_device()
+	check(not account.is_signed_in() and not account.busy and account.status.to_lower().contains("register"), "disabled anonymous account creation directs player to credential registration")
+	account.calls.clear()
+	account.replies = credential_replies(PLAYER_ID, TEST_USERNAME, "[]")
+	await account.register(TEST_USERNAME, TEST_EMAIL, TEST_PASSWORD)
+	check(account.calls[0].api == "RegisterPlayFabUser" and account.is_signed_in() and account.has_credentials and account.status.begins_with("Account registered."), "fresh registration succeeds independently of disabled anonymous account creation")
+	account.sign_out()
+	account.replies = [credential_replies(PLAYER_ID, TEST_USERNAME, "[]")[0], {"ok": false, "error": "Connection"}]
+	await account.register(TEST_USERNAME, TEST_EMAIL, TEST_PASSWORD)
+	check(not account.is_signed_in() and not account.has_credentials and not account.busy and account.status.contains("created") and account.status.contains("Sign in"), "post-signup proof failure explains existing account recovery without unverified identity")
+	account.replies = credential_replies(PLAYER_ID, TEST_USERNAME, "[]")
+	account.replies[2] = {"ok": false, "error": "Connection"}
+	await account.register(TEST_USERNAME, TEST_EMAIL, TEST_PASSWORD)
+	check(account.is_signed_in() and account.has_credentials and not account.is_developer() and account.status.begins_with("Account registered."), "permission service failure cannot erase confirmed registration success")
+	account.replies = [{"ok": false, "error": "InvalidUsernameOrPassword"}]
+	await account.login_credentials(TEST_EMAIL, TEST_PASSWORD)
+	check(not account.is_signed_in() and not account.is_developer() and not account.busy and account.status.to_lower().contains("password"), "credential rejection explains sign-in failure and revokes prior access")
+	account.replies = [{"ok": false, "error": "ProviderRejected", "provider_code": 5847}]
+	await account.login_credentials(TEST_USERNAME, TEST_PASSWORD)
+	check(not account.is_signed_in() and not account.is_developer() and not account.busy and account.status.contains("5847"), "unknown numeric sign-in failure is reviewable without inventing authorization or leaving busy state")
+	account.queue_free()
+	await process_frame
 
 func test_private_identity_storage() -> void:
 	var account := StorageAccount.new()
@@ -174,6 +386,10 @@ func test_registration_and_credentials() -> void:
 	account.replies = [{"ok": true, "data": {"PlayFabId": PLAYER_ID, "SessionTicket": TEST_TICKET, "Username": TEST_USERNAME}}, proof(DEV_ID, TEST_USERNAME)]
 	await account.register(TEST_USERNAME, TEST_EMAIL, TEST_PASSWORD)
 	check(not account.is_signed_in() and not account.has_credentials and not account.is_developer(), "signup result username cannot override mismatched authenticated ticket owner")
+	account.calls.clear()
+	account.replies = [{"ok": true, "data": {"PlayFabId": PLAYER_ID, "SessionTicket": TEST_TICKET, "Username": TEST_USERNAME}}, {"ok": true, "data": {"AccountInfo": {"PlayFabId": PLAYER_ID}}}]
+	await account.register(TEST_USERNAME, TEST_EMAIL, TEST_PASSWORD)
+	check(account.calls.size() == 2 and not account.is_signed_in() and not account.has_credentials and not account.is_developer() and not account.busy and account.status.contains("created") and account.status.contains("Sign in"), "matching signup ticket owner without verified username denies registered success and offers credential recovery")
 	account.replies = login_replies(PLAYER_ID, JSON.stringify([DEV_ID]))
 	await account.login_device()
 	check(account.is_signed_in() and not account.has_credentials, "automatic anonymous device account is eligible for credential upgrade")

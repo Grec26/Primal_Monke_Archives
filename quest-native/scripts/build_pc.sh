@@ -47,56 +47,80 @@ pm_write_launcher() {
 pm_write_launcher Play-Desktop.bat off desktop
 pm_write_launcher Play-PCVR.bat on pcvr
 cat > "$pm_output_dir/README.txt" <<'README'
-Primal Monke 0.4.0 for Windows
+Primal Monke 0.5.0 for Windows
 
-Extract every file from the ZIP into the same folder before playing.
-
-Play-Desktop.bat: keyboard and mouse play, without starting VR.
+Extract all four files from the ZIP into the same folder before playing.
+Play-Desktop.bat: keyboard and mouse play.
 Play-PCVR.bat: tracked headset and controller play using OpenXR.
-Connect your headset and start its active OpenXR runtime first. For a Quest
-headset, use Quest Link/Air Link or another configured PC OpenXR connection.
+Connect your headset and start its active OpenXR runtime first. Quest PC VR
+uses Link/Air Link or another configured PC OpenXR connection.
 
-The game loads its forest resources before showing the main menu. Choose Play
-solo for a new round, Multiplayer lobby to meet friends, or Account to manage
-sign-in. PC VR and Desktop switch play modes while you are offline. Resume
-game returns to an existing round without starting over.
+The game loads the forest, then offers Create account or Continue as guest
+on first launch. Choose Play solo for a 90-second monkey chase, or Multiplayer
+lobby for Co-op chase / Player Tag. The main menu also opens Account, Profile,
+Tutorial, and Voice. Resume game continues your round without resetting it.
+PC VR and Desktop restart the game to switch modes while you are offline.
 
-Desktop controls: WASD move, hold right mouse to look, Space jump, E tag, and
-R restart a solo round or a round you host. F1 opens the main menu. Tab opens
-the main menu offline or the lobby online; right B serves the same role in VR.
-Point with the right controller and press its trigger to select menu buttons.
+Desktop controls:
+WASD move; hold right mouse to look; Space jump; E tag a nearby monkey/player.
+R restarts solo or a hosted round. F1 opens the main menu.
+Tab opens the main menu offline or the room menu online.
+F3 Account; F4 Tutorial; F5 Profile/PFP; F6 Voice.
+F2 Developer tools, only when your account has permission.
+Hold V during captured gameplay to talk after enabling voice.
 
-The game automatically signs in a saved device account with PlayFab at startup.
-Account opens with F3 on desktop or left X in VR and shows your public PlayFab
-ID, sign-in status, and access role. You can play with that device account.
+VR controls:
+Push solid surfaces with tracked hands to move/climb; release to launch.
+Touch a target with a hand to tag. Right A restarts solo/a hosted round.
+Right B opens the main/room menu; left X opens Account; left Y opens approved
+developer tools. Aim the right controller and pull its trigger for menu buttons.
+Tutorial, Profile, and Voice are available from the main menu.
 
-To register, enter a username (3-20 characters), email, and password (6-100
-characters), then choose Register. Registering while signed into a device
-account adds credentials to that same account and preserves its PlayFab ID.
-Sign out before registering if you want a separate new account.
+Accounts are optional for solo and direct multiplayer. Guests stay offline
+unless they explicitly choose an account action. Returning registered players
+get a fresh Sign in prompt; passwords and session tickets are never saved.
 
-To use your registered account on another PC or Quest, enter its email or
-username and password, then choose Sign in. Email takes precedence when both
-fields are filled; clear Email to sign in by username. Passwords are masked,
-cleared after submission or closing Account, and never saved by the game.
-The VR form includes a keyboard with lowercase, uppercase, and symbols.
+To register, choose Create account and enter a username (3-20 characters),
+email, and password (6-100 characters). Enter in Password submits the selected
+mode. Invalid local input keeps the password for correction; real submission
+or closing Account clears it. Registering while signed into a device account
+adds credentials to that same account and preserves its PlayFab ID.
+Choose Sign in with an existing email or username and password. Email takes
+precedence when both fields are filled. VR has a keyboard with symbols/case.
+Support codes identify local/network/PlayFab failures; unknown numeric provider
+codes such as PF-5847 are kept for troubleshooting.
 
-Developer tools are available only to accounts approved by the game's owner.
-After your PlayFab ID is added to the server's developer list, choose Refresh
-access in Account. F2 on desktop or left Y in VR opens the developer menu.
-Use the same registered account on PC and Quest to keep the same approved ID.
+Profile sets your public name and picture and shows cosmetic XP/level.
+Upload PNG/JPEG up to 4 MiB and 4096 x 4096; pictures become a small square PNG.
+Your name, picture, and level are public to room players. Guest progress stays
+local; signed-in accounts can sync public PlayFab profiles. Failed cloud sync
+retains local progress; use Retry sync. XP grants no developer privileges.
 
-To play with standalone Quest, install the matching 0.4.0 native APK. Connect
-both devices to the same local network and choose Multiplayer lobby. Choose
-Host on one device, then enter its IPv4 address and choose Join on the other.
-Wait until the lobby roster contains your friends. The host chooses Start
-match to load the shared forest and begin the round. Movement, tagging, and
-the round timer stay paused while the room is staging. UDP port 7777 is used.
+To play with Quest, install the matching 0.5.0 APK and use the same local network.
+Choose Multiplayer lobby; Host on one device, then enter its IPv4 address and
+Join on the others. Up to eight players share a room using UDP 7777.
+The host selects Co-op chase or Player Tag, then Start match. Gameplay/timer
+remain paused in the waiting lobby. Co-op shares five AI monkeys and a score.
+Player Tag needs at least two players: the orange player is IT and passes that
+role by tagging another player. Only the host can restart.
+
+Voice starts off and your mic starts muted. Open Voice, enable listening, then
+explicitly unmute or hold V during gameplay to speak. Releasing V mutes again.
+VR uses the microphone button. Lobby voice reaches the room; game voice reaches
+players within 14 metres. Volume/per-player mute controls are available.
+Leaving a room or disabling voice stops capture/playback and mutes the mic.
+
+Developer tools require the owner's verified PlayFab ID approval. After your
+ID is added to the title-owned list, choose Refresh access in Account.
+No IDs are granted by this build. Names, PFPs, and XP cannot grant access.
+
+Windows/Quest hardware, real microphone/speaker output, performance, and
+successful live signup/profile writes still require device testing.
 
 Full instructions and source:
 https://github.com/Grec26/Primal_Monke_Archives/tree/main/pc
-Developer access setup:
-https://github.com/Grec26/Primal_Monke_Archives/tree/main/quest-native#developer-access
+Native guide and developer setup:
+https://github.com/Grec26/Primal_Monke_Archives/tree/main/quest-native
 README
 
 (

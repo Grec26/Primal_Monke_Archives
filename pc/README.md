@@ -1,67 +1,81 @@
 # Primal Monke for Windows
 
-[Download PrimalMonke-Windows.zip](PrimalMonke-Windows.zip?raw=true) and extract **all four files** into the same folder. Choose **Play-Desktop.bat** for keyboard and mouse play, or **Play-PCVR.bat** for a tracked headset and controllers. The ZIP contains the Windows 64-bit executable with its game data embedded, both launchers, and brief instructions. Unity and Godot are not required to play. Windows 10/11 and a graphics driver supporting OpenGL 3.3 are recommended.
+[Download PrimalMonke-Windows.zip](PrimalMonke-Windows.zip?raw=true) and extract **all four files** into one folder. Choose **Play-Desktop.bat** for keyboard/mouse or **Play-PCVR.bat** for a tracked headset and controllers. The ZIP contains the Windows x64 executable with embedded game data and icon, both launchers, and instructions. Unity and Godot are not required to play. Windows 10/11 and a graphics driver supporting OpenGL 3.3 are recommended.
 
 ## Start playing
 
-Version **0.4.0** loads the forest resources before opening the main menu. Choose **Play solo** for a new round, **Multiplayer lobby** to host or join friends, or **Account** to manage sign-in. **PC VR** and **Desktop** switch play modes while you are offline. **Resume game** returns to an existing round without resetting it.
+Version **0.5.0** adds updated menus, first-run registration, support error codes, picture uploads/PFPs, cosmetic levels, Player Tag, optional voice, tutorials, original audio, and a climbable treehouse. Startup loads the forest, then offers **Create account** or **Continue as guest** on first launch. The main menu opens **Play solo**, **Multiplayer lobby**, **Account**, **Profile**, **Tutorial**, and **Voice**. **Resume game** continues an existing round without resetting it.
 
-Press **F1** to open the main menu during play. **Tab** on desktop or right **B** in VR opens the main menu offline and the multiplayer lobby online. In a staging lobby, wait for the host to start the match; movement, tagging, and the round timer remain paused.
+Press **F1** for the main menu. **Tab** on desktop or right **B** in VR opens the main menu offline and the room menu online. In a waiting room, movement, tags, and the timer remain paused until the host chooses **Start match**.
 
 ## PC VR
 
-Connect your headset, start its PC OpenXR runtime, and launch **Play-PCVR.bat**. For a Quest headset, establish Quest Link/Air Link or another configured PC OpenXR connection first. Set your headset software as the active OpenXR runtime when needed. The PC VR launcher explicitly enables OpenXR; the desktop launcher disables it. You can also switch modes from the game's public menu.
+Connect your headset, start its active PC OpenXR runtime, and launch **Play-PCVR.bat**. For Quest, establish Link/Air Link or another configured PC OpenXR connection first. SteamVR can also provide the active runtime for a supported headset; it must support OpenGL graphics bindings. The PC VR launcher enables OpenXR and the desktop launcher disables it. **PC VR** / **Desktop** in the main menu restarts the game to switch modes while offline.
 
-In VR, push against surfaces with your tracked controllers to move and climb, touch monkeys to tag them, and press right **A** to restart a round you host. Right **B** opens the main menu offline or lobby online; point with the right controller and press its trigger to select buttons.
+In VR, push surfaces with tracked controllers to move and climb. Touch monkeys or players with a hand to tag. Right **A** restarts a solo or hosted round; right **B** opens the main/room menu. Aim the right controller and pull its trigger to select menu buttons.
 
 ## Controls
 
-- **WASD**: move.
-- Hold **right mouse button**: look.
-- **Space**: jump.
-- **E**: tag a nearby monkey.
-- **R**: restart a solo round or a round you host.
-- **F1**: open the main menu.
-- **Tab**: main menu offline or multiplayer lobby online; in VR, press right **B**.
-- **F3**: open or close Account; in VR, press left **X**.
-- **F2**: open or close developer tools when your account has access; in VR, press left **Y**.
+| Key | Action |
+| --- | --- |
+| WASD | Move |
+| Hold right mouse | Look |
+| Space | Jump |
+| E | Tag a nearby monkey/player |
+| R | Restart a solo or hosted round |
+| F1 | Main menu |
+| Tab | Main menu offline / room menu online |
+| F3 | Account; left X in VR |
+| F2 | Developer tools with permission; left Y in VR |
+| F4 | Tutorial |
+| F5 | Profile and picture upload |
+| F6 | Voice settings |
+| Hold V | Talk during captured gameplay after enabling voice |
 
-## Accounts and developer access
+Tutorial, Profile, and Voice are also available through the main menu in a headset. Tutorial exercises check movement, jumping/hand contact, and accepted tags; they can be skipped or replayed.
 
-The game automatically signs in a saved device account with PlayFab at startup. Open **Account** with **F3** or left **X** to see your public **PlayFab ID**, sign-in status, and access role. You can play with the device account or register credentials from this menu.
+## Accounts and profiles
 
-To register, enter a **username of 3–20 characters**, an **email**, and a **password of 6–100 characters**, then choose **Register**. Registering while signed into a device account adds credentials to that account and **preserves its PlayFab ID**. Sign out first if you want to create a separate account. In VR, select a field and use the on-screen keyboard, including uppercase, symbols, and spaces.
+First launch offers **Create account** and **Continue as guest**. Gameplay works without sign-in. Guests remain offline unless they explicitly choose an account action. Returning registered players see **Sign in** again because passwords and session tickets are never saved.
 
-To use the same registered account on another PC or Quest, enter its **email or username** and password, then choose **Sign in**. Email takes precedence when both fields are filled; clear Email to use Username. The game masks password inputs, clears them after submission or closing Account, and does not save passwords. Each startup signs in the saved local device identity; choose credential sign-in when you want an account registered on another device.
+Open **Account / F3 / left X**. To register, choose **Create account** and enter a username (3–20 characters), email, and password (6–100 characters). **Enter** in Password submits the selected mode. Invalid local details preserve the password for correction; actual submission or closing Account clears it. Registering while signed into an anonymous device account preserves that account's PlayFab ID. Sign out to create a separate account.
 
-The owner approves selected PlayFab IDs through the server's `PrimalMonkeDeveloperIds` list. After approval, select **Refresh access** in Account, then open developer tools with **F2** or left **Y**. See the [developer access setup](../quest-native/README.md#developer-access). Signing into the same registered account on PC and Quest gives both devices the same approved ID. Separate device accounts have separate IDs.
+Choose **Sign in** with your existing email or username and password to use the same account on PC and Quest. Email takes precedence when both fields are filled. VR has a keyboard with lowercase, uppercase, symbols, and spaces. Feedback includes support codes for validation, connectivity, and PlayFab failures; unknown numeric provider codes such as **PF-5847** remain visible for troubleshooting. [Full account/error instructions](../quest-native/README.md#accounts).
+
+Open **Profile / F5** to change your public name, upload/reset a PFP, view XP/level, or retry cloud sync. Pictures must be local PNG/JPEG files up to **4 MiB** and **4096 × 4096**; they are cropped to a small square PNG. Names, pictures, and levels are visible to other room players. Guest progress stays local; verified accounts can sync the public **PMProfileV1** PlayFab profile after its initial read succeeds. Failed reads/writes preserve local progress for retry.
+
+XP is cosmetic and managed by the client. Co-op awards 10 XP per shared bot tag and 25 XP for finishing all five; Player Tag awards 20 XP per accepted player tag and 15 XP for finishing without being IT. XP grants no developer permissions. [Profile details](../quest-native/README.md#profiles-and-levels).
+
+The owner approves selected PlayFab IDs through title **1A7D9B**'s `PrimalMonkeDeveloperIds` list. After approval, choose **Refresh access** in Account, then open **F2 / left Y**. No IDs are granted by this update. [Developer access setup](../quest-native/README.md#developer-access).
 
 ## Play with Quest
 
-Use the matching **0.4.0** [Quest APK](../apk/README.md). This native Windows game and that native Quest build share one multiplayer protocol. The Unity and browser versions use their own separate projects.
+Use the matching **0.5.0** [Quest APK](../apk/README.md). Unity 2021.3.21f1 and WebXR remain separate single-player projects.
 
-1. Connect the PC and Quest to the same local network.
-2. Choose **Multiplayer lobby** from each main menu. On either device, choose **Host**. The lobby shows that device's local IP address.
-3. On the other device, enter the host's IPv4 address and choose **Join**. On Quest, point at the lobby with the right controller and use its trigger to select buttons and enter the address.
-4. Wait in the lobby and check the roster. The host chooses **Start match** when everyone has joined. Both devices show a loading screen before entering the shared round; joining a room by itself leaves gameplay and the timer paused.
-5. Tag the five AI monkeys together before the shared 90-second timer expires. The host controls restarts. Up to eight players can join the same session. **Tab** or right **B** reopens the lobby during online play.
+1. Connect PC and Quest to the same local network, then choose **Multiplayer lobby**.
+2. One device chooses **Host** and shares the local IPv4 address shown in its lobby. Other players enter it and choose **Join**.
+3. The host selects **Co-op chase** or **Player Tag** while the lobby is waiting. Player Tag needs at least two players.
+4. Check the roster, then have the host choose **Start match**. All devices load before the shared 90-second round starts.
+5. In Co-op chase, tag five AI monkeys together. In Player Tag, the orange player is IT and transfers the role by tagging another player. Only the host can restart.
 
-If Windows asks, allow the game through its firewall on your private network. Connections use **UDP 7777**. Guest Wi-Fi isolation can prevent devices from connecting. There is no public matchmaking service; this build is intended for direct connections on a local network.
+Up to eight players share one room. If Windows asks, allow the game through its firewall on your private network. Connections use **UDP 7777**; guest Wi-Fi isolation can block them. There is no hosted matchmaking or relay. [Crossplay instructions](../quest-native/README.md#crossplay).
+
+## Voice chat
+
+Voice starts **off** with your microphone **muted**. Open **Voice / F6**, choose **Enable voice** to listen, then explicitly unmute or hold **V** during gameplay to speak. Releasing V mutes again. In VR, use the microphone button. Lobby voice reaches the room; match voice reaches players within **14 metres**. Use the volume control and individual player mute buttons as needed. Leaving the room or disabling voice stops capture/playback and mutes the mic.
 
 ## Rebuild
 
-Install Godot **4.6.3** and its matching official Windows export templates. Export the **Windows** preset from `quest-native/project.godot` in release mode, or on a system with Bash and `zip` run:
+Install Godot **4.6.3** and its matching official Windows export templates. Export the **Windows** preset from `quest-native/project.godot` in release mode, or with Bash and `zip` run:
 
 ```sh
 ./quest-native/scripts/build_pc.sh
 ```
 
-Set `GODOT_BIN` if the executable is not named `godot`. The script writes the executable and download ZIP to `Builds/Windows/`.
+Set `GODOT_BIN` if needed. The helper writes the executable and ZIP to `Builds/Windows/`.
 
 ## Verification
 
-The Windows x64 release export was built in the cloud workspace. PE architecture, ZIP integrity, both launcher arguments, embedded game resources, and game-resource checksums were verified. The embedded app icon matches the source artwork at 16, 32, 48, 64, 128, and 256 pixels. The exact embedded game pack started on Linux Godot and passed all 49 frontend checks, including threaded boot loading, main menu, solo/resume, staging lobby, host Start match, and initial headset menu placement. Desktop screens were also checked at widths of 1280 and 960 pixels in the cloud.
+Release checks cover Windows PE architecture/icon, ZIP integrity, launcher arguments, embedded resources, and game-resource checksums. Headless suites cover gameplay, account/developer access, registration UI/error codes, loading/menu flow, profiles/XP, tutorials/audio, and voice handling. Three-process ENet tests cover co-op, Player Tag, and synthetic voice packets using desktop/simulated VR poses. Mock account tests create no real players; a production probe with `CreateAccount=false` verified PlayFab transport.
 
-All 16 native smoke checks and 134 account, registration, developer access, and play mode checks passed. Mock UI checks and an independent review verified password masking, clearing, whitespace preservation, and all 95 printable ASCII keyboard characters. A three-process ENet session passed 129 assertions, including staged start and mixed desktop/simulated VR poses. Live PlayFab sign-in/registration, Windows execution, Windows/Quest device connections, real headset controllers, and rendering/performance still need testing.
-
-The download is about **37.5 MiB**; the extracted executable is about **103.0 MiB**. Exact sizes and SHA-256 hashes are recorded in [build-info.json](build-info.json). The ZIP checksum is also available in [PrimalMonke-Windows.zip.sha256](PrimalMonke-Windows.zip.sha256).
+Windows execution, real Windows/Quest connections, headset controls, microphone/speaker output, rendering/performance, and successful live signup/profile writes remain untested. Exact download sizes, hashes, and release check results are recorded in [build-info.json](build-info.json). The ZIP checksum is in [PrimalMonke-Windows.zip.sha256](PrimalMonke-Windows.zip.sha256).

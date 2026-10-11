@@ -6,15 +6,22 @@ const INK := Color("112c25")
 const CREAM := Color("f4f1df")
 const MUTED := Color("b4c9af")
 const ORANGE := Color("f0aa58")
+const MenuTheme = preload("res://scripts/menu_theme.gd")
 
 var _desktop_mode: Label
 var _world_mode: Label3D
+var _desktop_profile: Label
+var _world_profile: Label3D
+var _desktop_frame: Dictionary = {}
+var _desktop_artwork: VBoxContainer
+var _desktop_utilities: GridContainer
+var _desktop_heading: Label
 
 func _init() -> void:
 	toggle_key = KEY_F1
 	toggle_hand = 1
 	toggle_button = "by_button"
-	panel_size = Vector2(1.7, 1.94)
+	panel_size = Vector2(1.7, 2.18)
 	_status_text = "Choose how you want to play."
 
 func toggle() -> void:
@@ -49,6 +56,9 @@ func _action_enabled(action: String) -> bool:
 		"solo": return game.has_method("start_solo")
 		"multiplayer": return game.has_method("open_multiplayer_lobby")
 		"account": return game.has_method("open_account_menu")
+		"profile": return game.has_method("open_profile_menu")
+		"tutorial": return game.has_method("open_tutorial_menu")
+		"voice": return game.has_method("open_voice_menu")
 		"resume": return game.has_method("can_resume_play") and game.has_method("resume_play") and bool(game.call("can_resume_play"))
 		"quit": return OS.get_name() != "Android" and game.has_method("quit_game")
 		"pcvr", "desktop": return super._action_enabled(action)
@@ -61,6 +71,9 @@ func _dispatch(action: String) -> void:
 		"solo": game.call("start_solo")
 		"multiplayer": game.call("open_multiplayer_lobby")
 		"account": game.call("open_account_menu")
+		"profile": game.call("open_profile_menu")
+		"tutorial": game.call("open_tutorial_menu")
+		"voice": game.call("open_voice_menu")
 		"resume": game.call("resume_play")
 		"quit": game.call("quit_game")
 		"pcvr", "desktop": game.call("switch_play_mode", action)
@@ -73,7 +86,7 @@ func refresh_status() -> void:
 	var mode_notice := _game_text("play_mode_notice", "")
 	if not mode_notice.is_empty():
 		status += "\n" + mode_notice
-	var snapshot := "%s|%s|%s|%s|%s|%s|%s" % [status, _is_xr(), _action_enabled("resume"), _action_enabled("pcvr"), _action_enabled("desktop"), _game_text("account_status", "Signed out"), _game_text("frontend_state", "main_menu")]
+	var snapshot := "%s|%s|%s|%s|%s|%s|%s|%s" % [status, _is_xr(), _action_enabled("resume"), _action_enabled("pcvr"), _action_enabled("desktop"), _game_text("account_status", "Signed out"), _game_text("frontend_state", "main_menu"), _game_text("profile_summary", "Monke · Level 1")]
 	if snapshot == _state_snapshot:
 		return
 	_state_snapshot = snapshot
@@ -92,6 +105,9 @@ func _mode_text() -> String:
 	return "PC VR · arm movement" if _is_xr() else "DESKTOP · keyboard + mouse"
 
 func _update_labels() -> void:
+	var summary := _game_text("profile_summary", "Monke · Level 1")
+	if _desktop_profile != null: _desktop_profile.text = summary
+	if _world_profile != null: _world_profile.text = summary.replace("\n", " ").left(72)
 	if _desktop_status != null:
 		_desktop_status.text = _status_text
 	if _desktop_mode != null:
@@ -122,69 +138,44 @@ func _label(parent: Node, text: String, size: int, color: Color = CREAM) -> Labe
 	return label
 
 func _menu_button(parent: Container, caption: String, action: String, primary := false) -> Button:
-	var button := Button.new()
-	button.text = caption
-	button.custom_minimum_size.y = 54 if primary else 44
-	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	button.add_theme_font_size_override("font_size", 19 if primary else 17)
-	var fill := ORANGE if primary else Color("294b3e")
-	var text_color := INK if primary else CREAM
-	button.add_theme_stylebox_override("normal", _style(fill))
-	button.add_theme_stylebox_override("hover", _style(fill.lightened(0.12)))
-	button.add_theme_stylebox_override("pressed", _style(fill.darkened(0.12)))
-	button.add_theme_stylebox_override("disabled", _style(Color("203a31")))
-	button.add_theme_stylebox_override("focus", _style(Color.TRANSPARENT, CREAM))
-	for state in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
-		button.add_theme_color_override(state, text_color)
-	button.add_theme_color_override("font_disabled_color", Color("7f9685"))
-	button.pressed.connect(func(): _dispatch(action))
-	parent.add_child(button)
-	_desktop_buttons[action] = button
-	return button
+	return MenuTheme.button(self, parent, caption, action, primary)
+
+func _adapt_desktop_layout() -> void:
+	var width := get_viewport().get_visible_rect().size.x
+	if _desktop_artwork != null: _desktop_artwork.visible = width >= 840
+	if _desktop_utilities != null: _desktop_utilities.columns = 2 if width >= 600 else 1
+	if _desktop_heading != null: _desktop_heading.add_theme_font_size_override("font_size", 44 if width >= 840 else 36)
 
 func _create_desktop_menu() -> void:
-	_canvas = CanvasLayer.new()
-	_canvas.name = "MainMenuOverlay"
-	_canvas.layer = 20
-	add_child(_canvas)
-	var root := Control.new()
-	_canvas.add_child(root)
-	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	root.mouse_filter = Control.MOUSE_FILTER_STOP
-	var shade := ColorRect.new()
-	shade.color = Color(0.025, 0.07, 0.05, 0.77)
-	root.add_child(shade)
-	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var center := CenterContainer.new()
-	root.add_child(center)
-	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(900, 0)
-	panel.add_theme_stylebox_override("panel", _style(Color("122f27"), Color("3b5947"), 20))
-	center.add_child(panel)
-	var margin := MarginContainer.new()
-	for side in ["left", "right", "top", "bottom"]:
-		margin.add_theme_constant_override("margin_" + side, 24)
-	panel.add_child(margin)
+	_desktop_frame = MenuTheme.desktop_frame(self, "MainMenuOverlay", 20, 900)
+	_canvas = _desktop_frame.canvas
 	var columns := HBoxContainer.new()
 	columns.add_theme_constant_override("separation", 32)
-	margin.add_child(columns)
+	_desktop_frame.content.add_child(columns)
 	var content := VBoxContainer.new()
-	content.custom_minimum_size.x = 398
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	content.add_theme_constant_override("separation", 10)
 	columns.add_child(content)
 	_label(content, "WELCOME TO THE FOREST", 13, ORANGE)
-	_label(content, "PRIMAL\nMONKE", 48)
+	_desktop_heading = _label(content, "PRIMAL\nMONKE", 44)
 	_label(content, "Swing. Climb. Tag. Repeat.", 17, MUTED)
+	_desktop_profile = _label(content, "", 14, MenuTheme.GREEN)
+	_desktop_profile.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var gap := Control.new()
 	gap.custom_minimum_size.y = 8
 	content.add_child(gap)
 	_menu_button(content, "Resume game", "resume", true)
 	_menu_button(content, "Play solo", "solo", true)
 	_menu_button(content, "Multiplayer lobby", "multiplayer")
-	_menu_button(content, "Account", "account")
+	_desktop_utilities = GridContainer.new()
+	_desktop_utilities.columns = 2
+	_desktop_utilities.add_theme_constant_override("h_separation", 8)
+	_desktop_utilities.add_theme_constant_override("v_separation", 8)
+	content.add_child(_desktop_utilities)
+	_menu_button(_desktop_utilities, "Profile & levels", "profile")
+	_menu_button(_desktop_utilities, "Account", "account")
+	_menu_button(_desktop_utilities, "Tutorial", "tutorial")
+	_menu_button(_desktop_utilities, "Voice controls", "voice")
 	if OS.get_name() != "Android":
 		var mode_row := HBoxContainer.new()
 		mode_row.add_theme_constant_override("separation", 8)
@@ -193,8 +184,9 @@ func _create_desktop_menu() -> void:
 		_menu_button(mode_row, "Desktop", "desktop")
 		_menu_button(content, "Quit", "quit")
 	var artwork := VBoxContainer.new()
+	_desktop_artwork = artwork
 	artwork.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	artwork.custom_minimum_size.x = 330
+	artwork.custom_minimum_size.x = 310
 	artwork.add_theme_constant_override("separation", 12)
 	columns.add_child(artwork)
 	var logo_center := CenterContainer.new()
@@ -215,30 +207,39 @@ func _create_desktop_menu() -> void:
 	_desktop_status.custom_minimum_size.y = 46
 	var hint := _label(artwork, "F1 / Tab: menu · F3: account\nHeadset: right B menu · aim + trigger", 13, MUTED)
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	get_viewport().size_changed.connect(_adapt_desktop_layout)
+	_adapt_desktop_layout()
 
 func _create_world_menu() -> void:
 	_world_panel = Node3D.new()
 	_world_panel.name = "WorldMainMenu"
 	add_child(_world_panel)
 	_world_box(Vector2.ZERO, panel_size, -0.035, INK)
-	_world_box(Vector2(0, 0.88), Vector2(1.56, 0.014), -0.012, ORANGE)
-	_world_label("PRIMAL MONKE", Vector2(0, 0.76), 61)
-	_world_label("Swing. Climb. Tag. Repeat.", Vector2(0, 0.66), 29)
-	_world_mode = _world_label("", Vector2(0, 0.56), 24)
-	_world_status = _world_label("", Vector2(0, 0.435), 25)
-	_world_status.width = 1460.0
+	_world_box(Vector2(0, 1.00), Vector2(1.56, 0.014), -0.012, ORANGE)
+	_world_label("PRIMAL MONKE", Vector2(0, 0.88), 55)
+	_world_label("Swing. Climb. Tag. Repeat.", Vector2(0, 0.78), 27)
+	_world_mode = _world_label("", Vector2(0, 0.68), 23)
+	_world_profile = _world_label("", Vector2(0, 0.58), 24)
+	_world_profile.modulate = MenuTheme.GREEN
+	_world_status = _world_label("", Vector2(0, 0.46), 24)
+	_world_status.width = 1000.0
 	_world_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_world_button("PLAY SOLO", "solo", Vector2(0, 0.27), Vector2(1.46, 0.14), Color("946632"))
-	_world_button("MULTIPLAYER LOBBY", "multiplayer", Vector2(0, 0.085), Vector2(1.46, 0.14), Color("386d4b"))
-	_world_button("ACCOUNT", "account", Vector2(0, -0.10), Vector2(1.46, 0.14))
-	_world_button("RESUME GAME", "resume", Vector2(0, -0.285), Vector2(1.46, 0.14))
+	_world_button("PLAY SOLO", "solo", Vector2(0, 0.29), Vector2(1.46, 0.13), Color("946632"))
+	_world_button("MULTIPLAYER LOBBY", "multiplayer", Vector2(0, 0.115), Vector2(1.46, 0.13), Color("386d4b"))
+	_world_button("PROFILE + LEVELS", "profile", Vector2(-0.385, -0.055), Vector2(0.69, 0.12))
+	_world_buttons.back()["label"].font_size = 24
+	_world_button("ACCOUNT", "account", Vector2(0.385, -0.055), Vector2(0.69, 0.12))
+	_world_button("TUTORIAL", "tutorial", Vector2(-0.385, -0.225), Vector2(0.69, 0.12))
+	_world_button("VOICE", "voice", Vector2(0.385, -0.225), Vector2(0.69, 0.12))
+	_world_button("RESUME GAME", "resume", Vector2(0, -0.395), Vector2(1.46, 0.12))
 	if OS.get_name() != "Android":
-		_world_button("PC VR", "pcvr", Vector2(-0.385, -0.48), Vector2(0.69, 0.12))
-		_world_button("DESKTOP", "desktop", Vector2(0.385, -0.48), Vector2(0.69, 0.12))
-		_world_button("QUIT", "quit", Vector2(0, -0.64), Vector2(1.46, 0.1))
+		_world_button("PC VR", "pcvr", Vector2(-0.385, -0.56), Vector2(0.69, 0.12))
+		_world_button("DESKTOP", "desktop", Vector2(0.385, -0.56), Vector2(0.69, 0.12))
+		_world_button("QUIT", "quit", Vector2(0, -0.715), Vector2(1.46, 0.1))
 	else:
-		_world_label("PC + Quest · same Wi-Fi", Vector2(0, -0.49), 27)
-	_world_label("Right aim + trigger to select\nRight B opens this menu during play", Vector2(0, -0.825), 23)
+		_world_label("PC + Quest · same Wi-Fi", Vector2(0, -0.62), 27)
+	_world_label("Right aim + trigger to select\nRight B opens this menu during play", Vector2(0, -0.94), 23)
+	MenuTheme.world_text(_world_panel)
 	_pointer = MeshInstance3D.new()
 	var dot := SphereMesh.new()
 	dot.radius = 0.009

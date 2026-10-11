@@ -25,7 +25,7 @@ var lobby_members: Array:
 			return [{"id": 0, "label": "Local player", "is_host": false, "is_self": true}]
 		var roster: Array = []
 		for member in session.room_roster():
-			roster.append({"id": member.id, "label": member.label, "is_host": member.host, "is_self": member.local})
+			roster.append({"id": member.id, "label": member.label, "name": member.get("name", member.label), "level": member.get("level", 1), "avatar": member.get("avatar", PackedByteArray()), "is_host": member.host, "is_self": member.local})
 		return roster
 var lobby_can_start: bool:
 	get: return session != null and session.can_start_round() and frontend_state != "loading"
@@ -33,6 +33,28 @@ var lobby_is_staging: bool:
 	get: return not _resume_available or (session != null and network_mode != "offline" and session.phase != "playing")
 var account: AccountScript
 var account_menu: AccountMenuScript
+var profile: Node
+var profile_menu: Node3D
+var voice: Node
+var voice_menu: Node3D
+var tutorial: Node3D
+var sounds: Node
+var onboarding: Node
+var local_tag_count := 0
+var _profile_level := 1
+var _progress_round := ""
+var _progress_score := 0
+var _progress_finished := false
+var _local_round_serial := 0
+var _room_serial := 0
+var profile_summary: String:
+	get: return str(profile.call("summary")) if is_instance_valid(profile) and profile.has_method("summary") else "Monke · Level 1"
+var room_game_mode: String:
+	get: return str(session.get("game_mode")) if session != null else "co_op"
+var room_mode_label: String:
+	get: return "Player Tag · chase the orange monke" if room_game_mode == "tag" else "Co-op Chase · tag five monkeys"
+var account_error_code: String:
+	get: return account.error_code if account != null else ""
 var dev_menu: Node3D
 var requested_play_mode := "auto"
 var play_mode_notice := ""
@@ -154,6 +176,15 @@ func _ready() -> void:
 		sphere(self, location + Vector3.UP * 6.8, Vector3(2.9, 2.1, 2.5), mat("3c7344"))
 	box("LowRock", Vector3(-3, 0.5, 1), Vector3(3, 1, 2), "81876b")
 	box("HighRock", Vector3(-4, 1.25, 3), Vector3(2, 2.5, 2), "6f7861")
+	# Original climbable routes for arm-driven chases and player tag.
+	box("TreehouseDeck", Vector3(0, 2.8, 9), Vector3(6, 0.3, 4), "8d683d")
+	for side in [-1.0, 1.0]:
+		box("TreehousePost%s" % side, Vector3(side * 2.6, 1.4, 9), Vector3(0.35, 2.8, 0.35), "694b2e")
+		box("ClimbingPole%s" % side, Vector3(side * 2.4, 2.8, 6.8), Vector3(0.18, 5.6, 0.18), "b28e56")
+	box("TreehouseRoof", Vector3(0, 5.5, 9), Vector3(6.5, 0.25, 4.4), "365c37")
+	for index in range(7):
+		box("ClimbStep%s" % index, Vector3(5.0, 0.22 + index * 0.38, 4.0 + index * 0.6), Vector3(1.8, 0.36, 0.85), "907348")
+	box("BridgeRoute", Vector3(3.2, 2.8, 9), Vector3(2.4, 0.18, 0.8), "9a7645")
 	create_player()
 	if get_viewport().use_xr and xr is OpenXRInterface:
 		xr.pose_recentered.connect(player.reset_tracking_history)
@@ -199,6 +230,7 @@ func _ready() -> void:
 	account_menu.game = self
 	add_child(account_menu)
 	account.state_changed.connect(_account_changed)
+	_initialize_features()
 	diagnostics_board = Label3D.new()
 	diagnostics_board.position = Vector3(0, -0.22, -0.7)
 	diagnostics_board.font_size = 22
@@ -208,11 +240,135 @@ func _ready() -> void:
 	player.head.add_child(diagnostics_board)
 	_set_frontend_state("main_menu")
 	# Headless tests never register real players or make external account requests.
-	if DisplayServer.get_name() != "headless": account.call_deferred("login_device")
+	if DisplayServer.get_name() != "headless":
+		if onboarding != null and onboarding.call("should_skip_auto_device_login"):
+			onboarding.call_deferred("begin_if_needed")
+		else:
+			account.call_deferred("login_device")
+
+func _component(path: String, component_name: String) -> Node:
+	if not ResourceLoader.exists(path): return null
+	var script := load(path) as Script
+	if script == null: return null
+	var node: Node = script.new()
+	node.name = component_name
+	node.set("game", self)
+	add_child(node)
+	return node
+
+func _initialize_features() -> void:
+	sounds = _component("res://scripts/game_sounds.gd", "GameSounds")
+	profile = _component("res://scripts/profile_state.gd", "ProfileState")
+	voice = _component("res://scripts/voice_chat.gd", "VoiceChat")
+	profile_menu = _component("res://scripts/profile_menu.gd", "ProfileMenu") as Node3D
+	voice_menu = _component("res://scripts/voice_menu.gd", "VoiceMenu") as Node3D
+	tutorial = _component("res://scripts/tutorial_menu.gd", "TutorialMenu") as Node3D
+	onboarding = _component("res://scripts/onboarding.gd", "Onboarding")
+	if profile != null:
+		profile.connect("public_profile_changed", _profile_changed)
+		profile.call("account_changed")
+	# Bind GUI buttons once. VR actions use the shared menu ray handler.
+	for menu in [main_menu, lobby, account_menu, profile_menu, voice_menu]:
+		if menu == null: continue
+		var buttons: Variant = menu.get("_desktop_buttons")
+		if buttons is Dictionary:
+			for button in buttons.values():
+				if button is Button: button.pressed.connect(func(): play_ui_sound("click"))
+
+func _feature_menus() -> Array:
+	return [profile_menu, voice_menu, tutorial]
+
+func _feature_open() -> bool:
+	for menu in _feature_menus():
+		if is_instance_valid(menu) and menu.get("is_open") == true: return true
+	return false
+
+func _close_feature_menus(except: Node = null) -> void:
+	for menu in _feature_menus():
+		if is_instance_valid(menu) and menu != except and menu.get("is_open") == true:
+			menu.call("set_open", false)
+
+func on_feature_menu_open(menu: Node) -> void:
+	_changing_frontend = true
+	_close_feature_menus(menu)
+	lobby.set_open(false)
+	main_menu.set_open(false)
+	account_menu.set_open(false)
+	if is_instance_valid(dev_menu): dev_menu.set_open(false)
+	_changing_frontend = false
+	player.input_allowed = false
+
+func close_feature_menu(menu: Node) -> void:
+	if _changing_frontend: return
+	if menu != null and menu.get("is_open") == true:
+		_changing_frontend = true
+		menu.call("set_open", false)
+		_changing_frontend = false
+	on_account_menu_closed()
+
+func open_profile_menu() -> void:
+	if frontend_state != "loading" and profile_menu != null: profile_menu.call("set_open", true)
+
+func open_voice_menu() -> void:
+	if frontend_state != "loading" and voice_menu != null: voice_menu.call("set_open", true)
+
+func open_tutorial_menu() -> void:
+	if frontend_state == "loading" or tutorial == null: return
+	if tutorial.get("practice_active") == true: tutorial.call("set_open", true)
+	else: tutorial.call("begin")
+
+func on_first_time_account_closed() -> void:
+	if onboarding != null: onboarding.call("continue_as_guest", not _changing_frontend)
+
+func cycle_room_mode() -> void:
+	if session != null and frontend_state != "loading": session.call("cycle_game_mode")
+
+func play_ui_sound(cue := "click") -> void:
+	if sounds != null: sounds.call("play_cue", cue)
+
+func _profile_changed() -> void:
+	if profile == null: return
+	var level := int(profile.get("level"))
+	if level > _profile_level: play_ui_sound("level_up")
+	_profile_level = level
+	if session != null: session.call("publish_profile", profile.call("public_profile"))
+
+func on_bot_tagged(tagger: int, _index: int, _event_key: String) -> void:
+	if tagger == multiplayer.get_unique_id(): local_tag_count += 1
+	play_ui_sound("tag")
+
+func on_player_tagged(tagger: int, _target: int, event_key: String) -> void:
+	if tagger == multiplayer.get_unique_id():
+		local_tag_count += 1
+		if profile != null: profile.call("award_xp", 20, "player:%s:%s" % [_room_serial, event_key])
+	play_ui_sound("tag")
+
+func _update_progress() -> void:
+	if profile == null or frontend_state != "playing": return
+	var serial := session.received_round if session != null and session.is_client() else (session.round_id if session != null else _local_round_serial)
+	var key := "%s:%s:%s:%s" % [_room_serial, network_mode, serial, _local_round_serial if network_mode == "offline" else 0]
+	if key != _progress_round:
+		_progress_round = key
+		_progress_score = 0
+		_progress_finished = false
+	if room_game_mode == "co_op":
+		while _progress_score < score:
+			_progress_score += 1
+			profile.call("award_xp", 10, "round:" + key + ":bot:" + str(_progress_score))
+	if finished and not _progress_finished:
+		_progress_finished = true
+		if room_game_mode == "co_op" and score == bots.size():
+			profile.call("award_xp", 25, "round:" + key + ":win")
+			play_ui_sound("success")
+		elif room_game_mode == "tag" and not session.call("is_local_tagger"):
+			profile.call("award_xp", 15, "round:" + key + ":survive")
+			play_ui_sound("success")
+		else: play_ui_sound("error")
 
 func _set_frontend_state(state: String) -> void:
 	frontend_state = state
 	_changing_frontend = true
+	_close_feature_menus()
 	if account_menu != null: account_menu.set_open(false)
 	if is_instance_valid(dev_menu): dev_menu.set_open(false)
 	if main_menu != null: main_menu.set_open(state == "main_menu")
@@ -256,6 +412,7 @@ func start_solo() -> void:
 	if frontend_state == "loading": return
 	_returning_to_main = true
 	session.leave()
+	session.call("set_game_mode", "co_op")
 	_returning_to_main = false
 	_loading_generation += 1
 	var generation := _loading_generation
@@ -312,6 +469,8 @@ func _prepare_online_round(phase_generation: int) -> void:
 	if session.is_host(): session.complete_loading(phase_generation)
 
 func on_network_left() -> void:
+	# Hosts can reuse round/event IDs. Scope cosmetic rewards to this connection.
+	_room_serial += 1
 	if _returning_to_main: return
 	_loading_generation += 1
 	# Disconnects can arrive after the room phase became playing, while the
@@ -359,6 +518,7 @@ func can_open_account_menu() -> bool:
 
 func on_account_menu_open() -> void:
 	_changing_frontend = true
+	_close_feature_menus()
 	lobby.set_open(false)
 	main_menu.set_open(false)
 	player.input_allowed = false
@@ -372,6 +532,7 @@ func on_account_menu_closed() -> void:
 
 func on_developer_menu_open() -> void:
 	_changing_frontend = true
+	_close_feature_menus()
 	lobby.set_open(false)
 	main_menu.set_open(false)
 	account_menu.set_open(false)
@@ -397,6 +558,8 @@ func account_logout() -> void:
 	account.sign_out()
 
 func _account_changed() -> void:
+	if profile != null: profile.call("account_changed")
+	if not account.error_code.is_empty(): play_ui_sound("error")
 	if account_is_developer:
 		if not is_instance_valid(dev_menu):
 			var script := load("res://dev/developer_menu.gd") as Script
@@ -527,6 +690,7 @@ func create_bots() -> void:
 
 func restart() -> void:
 	if session != null and session.is_client(): return
+	_local_round_serial += 1
 	remaining = 90
 	score = 0
 	finished = false
@@ -537,21 +701,28 @@ func restart() -> void:
 	_developer_message = "Developer access verified"
 	if session != null: session.round_restarted()
 
-func tag_bot(bot: BotScript) -> void:
+func tag_bot(bot: BotScript, tagger := 0) -> void:
 	if frontend_state != "playing" or (session != null and network_mode != "offline" and session.phase != "playing"): return
 	if session != null and session.is_client(): return
+	if room_game_mode != "co_op": return
 	if finished or bot.tagged: return
 	bot.tag()
 	score += 1
+	if tagger == 0: tagger = multiplayer.get_unique_id()
+	if session != null: session.call("notify_bot_tag", tagger, bots.find(bot))
+	else: on_bot_tagged(tagger, bots.find(bot), "solo")
 	if score == 5: finished = true
 
 func _physics_process(delta: float) -> void:
 	if player == null: return
-	var menu_open: bool = frontend_state != "playing" or (main_menu != null and main_menu.is_open) or (lobby != null and lobby.is_open) or (account_menu != null and account_menu.is_open) or (is_instance_valid(dev_menu) and dev_menu.is_open)
+	var menu_open: bool = frontend_state != "playing" or (main_menu != null and main_menu.is_open) or (lobby != null and lobby.is_open) or (account_menu != null and account_menu.is_open) or (is_instance_valid(dev_menu) and dev_menu.is_open) or _feature_open()
 	# Opening the public lobby closes any other overlay, so only one menu owns input.
 	if lobby != null and lobby.is_open:
+		_changing_frontend = true
+		_close_feature_menus()
 		if account_menu != null and account_menu.is_open: account_menu.set_open(false)
 		if is_instance_valid(dev_menu) and dev_menu.is_open: dev_menu.set_open(false)
+		_changing_frontend = false
 	player.input_allowed = xr_focused and not menu_open and (network_mode == "offline" or session.phase == "playing")
 	var pressed: bool = (xr_focused and player.hands[1].is_button_pressed("ax_button")) if player.xr_running else Input.is_physical_key_pressed(KEY_R)
 	if pressed and not restart_held and player.input_allowed: request_restart()
@@ -560,7 +731,8 @@ func _physics_process(delta: float) -> void:
 	var active := not poses.is_empty()
 	var authority := session == null or not session.is_client()
 	for bot in bots:
-		bot.active = authority and active and not finished and not developer_bots_frozen
+		bot.visible = room_game_mode == "co_op"
+		bot.active = room_game_mode == "co_op" and authority and active and not finished and not developer_bots_frozen
 		bot.use_network_target = session != null and session.is_host()
 		if bot.use_network_target:
 			var closest := INF
@@ -572,14 +744,17 @@ func _physics_process(delta: float) -> void:
 	if authority and active and not finished:
 		remaining = maxf(0, remaining - delta)
 		for bot in bots:
+			if room_game_mode != "co_op": break
 			if bot.tagged: continue
 			var target: Vector3 = bot.global_position + Vector3.UP * 0.7
 			for pose in poses:
 				if pose.vr:
-					if pose.left.distance_to(target) < 0.65 or pose.right.distance_to(target) < 0.65: tag_bot(bot)
-				elif pose.tag and pose.head.distance_to(target) < 1.7: tag_bot(bot)
+					if pose.left.distance_to(target) < 0.65 or pose.right.distance_to(target) < 0.65: tag_bot(bot, int(pose.get("peer_id", multiplayer.get_unique_id())))
+				elif pose.tag and pose.head.distance_to(target) < 1.7: tag_bot(bot, int(pose.get("peer_id", multiplayer.get_unique_id())))
 		if remaining <= 0: finished = true
+	_update_progress()
 	var title := "ALL MONKEYS TAGGED!" if score == 5 else ("TIME'S UP!" if finished else "FOREST CHASE")
+	if room_game_mode == "tag": title = "TIME'S UP!" if finished else ("YOU ARE IT!" if session.call("is_local_tagger") else "RUN FROM THE ORANGE MONKE")
 	var status := "Push surfaces to move. Touch monkeys to tag." if player.xr_running else "WASD / right mouse: look / Space / E: tag"
 	if not active: status = "Paused — close menu / restore headset + controller tracking"
 	status += "\nRight B / Tab: menu · F1: main menu · " + network_mode
@@ -587,12 +762,15 @@ func _physics_process(delta: float) -> void:
 	else: status += " · Right A / R: restart"
 	if not play_mode_notice.is_empty(): status += "\n" + play_mode_notice
 	if account_is_developer: status += "\nDeveloper tools: F2 / left Y · Account: F3 / left X"
+	status += "\n" + profile_summary
+	if voice != null and voice.get("enabled") == true: status += "\n" + str(voice.get("status"))
 	var diagnostics := "%s FPS · %s · Tracking %s\nPosition %s\nRound %s / 5 · %ss" % [Engine.get_frames_per_second(), network_mode, player.tracked, player.global_position.snapped(Vector3.ONE * 0.1), score, ceili(remaining)]
 	if diagnostics_enabled and not account_is_developer: diagnostics_enabled = false
 	if diagnostics_board != null:
 		diagnostics_board.visible = diagnostics_enabled and player.xr_running
 		diagnostics_board.text = diagnostics
 	var text := "PRIMAL MONKE\n%s\n%s / 5 TAGGED     %ss\n%s" % [title, score, ceili(remaining), status]
+	if room_game_mode == "tag": text = "PRIMAL MONKE\n%s\n%s · %ss\n%s" % [title, session.call("player_tag_summary"), ceili(remaining), status]
 	if text != last_board:
 		board.text = text
 		desktop_label.text = text
