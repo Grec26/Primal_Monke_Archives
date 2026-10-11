@@ -6,6 +6,8 @@ A separate **WebXR browser version** is available in [`web/`](web/README.md). It
 
 To publish it as a website, select **GitHub Actions** in the repository's [Pages settings](https://github.com/Grec26/Primal_Monke_Archives/settings/pages), then run the **Deploy Primal Monke website** workflow. See the [website setup instructions](web/README.md#github-pages-website).
 
+The chosen custom domain is **primalmonke.game**. Its [domain setup instructions](web/README.md#custom-domain-primalmonkegame) include the required GitHub Pages setting and DNS records; the domain is not yet verified as live.
+
 ## Open and play
 
 1. Install **Unity 2021.3.21f1** using Unity Hub. For standalone Quest builds, include Android Build Support, SDK/NDK tools, and OpenJDK.
