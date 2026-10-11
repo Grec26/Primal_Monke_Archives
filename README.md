@@ -4,9 +4,9 @@ An original single-player Unity VR tag prototype inspired by arm-driven locomoti
 
 A separate **WebXR browser version** is available in [`web/`](web/README.md). It supports headset controllers and an on-screen mode without modifying the Unity project.
 
-To publish it as a website, select **GitHub Actions** in the repository's [Pages settings](https://github.com/Grec26/Primal_Monke_Archives/settings/pages), then run the **Deploy Primal Monke website** workflow. See the [website setup instructions](web/README.md#github-pages-website).
+To publish it as a website, select **GitHub Actions** in the repository's [Pages settings](https://github.com/Grec26/Primal_Monke_Archives/settings/pages), then run the **Deploy Primal Monke website** workflow. See the [website setup instructions](web/README.md#free-testing-website).
 
-The chosen custom domain is **primalmonke.game**. Its [domain setup instructions](web/README.md#custom-domain-primalmonkegame) include the required GitHub Pages setting and DNS records; the domain is not yet verified as live.
+Use the free testing address **https://grec26.github.io/Primal_Monke_Archives/** after deployment. No custom domain is required; leave the Pages Custom domain setting empty.
 
 ## Open and play
 

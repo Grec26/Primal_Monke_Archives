@@ -22,35 +22,15 @@ Push the floor, trunks, branches, or rocks to move; brace and pull to climb, and
 
 ## Build and host
 
-### GitHub Pages website
+### Free testing website
 
 The repository includes an automatic deployment workflow in `.github/workflows/pages.yml`.
 
 1. Open [repository Pages settings](https://github.com/Grec26/Primal_Monke_Archives/settings/pages).
-2. Under **Build and deployment → Source**, select **GitHub Actions**.
+2. Under **Build and deployment → Source**, select **GitHub Actions**. Leave **Custom domain** empty; remove `primalmonke.game` there if you entered it earlier.
 3. Open [the deployment workflow](https://github.com/Grec26/Primal_Monke_Archives/actions/workflows/pages.yml), choose **Run workflow**, and select `main`.
 
-After a successful deployment, the website will be at **https://grec26.github.io/Primal_Monke_Archives/**. Future changes to `web/` on `main` redeploy automatically. The workflow runs the game logic tests, builds the site with relative asset paths for the repository subdirectory, and publishes only the web build. GitHub Pages provides HTTPS for headset access. Initial Pages activation and the live URL have not been verified from the cloud workspace.
-
-### Custom domain: primalmonke.game
-
-The selected address is **https://primalmonke.game/**. `web/public/CNAME` records the domain and is copied into the website build. With GitHub Actions hosting, that file does **not** activate a custom domain; the Pages setting and your DNS records must also be configured. Domain registration, DNS control, Pages activation, and HTTPS have not been verified here.
-
-1. Use the domain provider account that controls `primalmonke.game`. If you have not registered the domain, registration is required first; this repository does not register or purchase it.
-2. In [repository Pages settings](https://github.com/Grec26/Primal_Monke_Archives/settings/pages), keep the source as **GitHub Actions**, enter **primalmonke.game** under **Custom domain**, and save it. If GitHub asks for ownership verification, add the exact TXT record it provides; do not invent its verification value.
-3. In your domain provider's DNS settings, point the apex/root (`@`) to GitHub Pages using these A records:
-
-   | Type | Name | Value |
-   | --- | --- | --- |
-   | A | @ | 185.199.108.153 |
-   | A | @ | 185.199.109.153 |
-   | A | @ | 185.199.110.153 |
-   | A | @ | 185.199.111.153 |
-   | CNAME | www | grec26.github.io |
-
-   The `www` record is optional. The CNAME target is the GitHub account hostname, without a repository path. Review any existing website records before changing them; conflicting apex A/AAAA or `www` records can route visitors elsewhere. Preserve unrelated mail and verification records. If using a DNS provider with an HTTP proxy, use DNS-only records while GitHub validates the domain and provisions its certificate.
-4. Run the website deployment workflow if a successful deployment is not already present. Wait for the Pages DNS check and certificate provisioning, then enable **Enforce HTTPS**. WebXR requires HTTPS.
-5. Open `https://primalmonke.game/`, confirm the game loads, and test **Enter VR** in a supported headset browser. The relative asset paths support hosting directly at the domain root.
+After a successful deployment, the free testing website will be at **https://grec26.github.io/Primal_Monke_Archives/**. No domain purchase or DNS configuration is needed. Future changes to `web/` on `main` redeploy automatically. The workflow runs the game logic tests, builds the site with relative asset paths for the repository subdirectory, and publishes only the web build. GitHub Pages provides HTTPS for headset access. Initial Pages activation and the live URL have not been verified from the cloud workspace.
 
 ### Other static hosts
 
