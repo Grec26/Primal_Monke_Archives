@@ -1,6 +1,6 @@
 # Primal Monke — native PC and Quest crossplay
 
-This **Godot 4.6.3 OpenXR port** builds a Windows x64 executable and an ARM64 Quest APK. Version **0.5.1** adds updated menus, first-run registration, error codes, public names and picture uploads/PFPs, cosmetic XP/levels, Player Tag, optional voice chat, tutorials, original sound effects and ambience, and a climbable treehouse. Up to eight PC and Quest players can share a room. Solo play remains available without an account connection.
+This **Godot 4.6.3 OpenXR port** builds a Windows x64 executable and an ARM64 Quest APK. Version **0.6.0** adds updated menus, first-run registration, error codes, public names and picture uploads/PFPs, cosmetic XP/levels, Player Tag, optional voice chat, tutorials, original sound effects and ambience, and a climbable treehouse. Settings save sound, desktop controls, and HUD preferences locally. The updated forest connects a treehouse, cave, lookout, and obstacle routes. Up to eight PC and Quest players can share a room. Solo play remains available without an account connection.
 
 The Unity **2021.3.21f1** and WebXR projects remain separate single-player versions. They cannot join these native multiplayer sessions. The forest, monkeys, icon, and audio are original; no Gorilla Tag assets or code are included.
 
@@ -35,6 +35,7 @@ Startup shows resource-loading progress, then offers **Create account** or **Con
 | Main menu offline / room menu online | Tab | Right B |
 | Account | F3 | Left X, or main menu |
 | Developer tools, with permission | F2 | Left Y |
+| Settings | F7 / Main menu | Main menu |
 | Tutorial / Profile / Voice | F4 / F5 / F6 | Main menu buttons |
 | Speak, after enabling voice | Hold V during captured gameplay, or unmute in Voice | Unmute/mute in Voice |
 
@@ -46,7 +47,7 @@ Tracking/focus loss pauses that player's movement and tags. Recenter clears hand
 
 ## Crossplay
 
-1. Install matching **0.5.1** Windows and Quest builds and connect devices to the same local network. Guest Wi-Fi/client isolation can block connections.
+1. Install matching **0.6.0** Windows and Quest builds and connect devices to the same local network. Guest Wi-Fi/client isolation can block connections.
 2. Choose **Multiplayer lobby**. One player selects **Host** and shares the local IPv4 address shown in the lobby. On Windows, allow the game through the firewall for your private network.
 3. Other players enter that address and select **Join**. VR has a controller-operated IPv4 keypad. Public names, levels, and pictures appear in the room roster.
 4. While the room is waiting, the host selects **Co-op chase** or **Player Tag** with the mode button. Co-op shares the five AI monkeys, score, and countdown. Player Tag requires at least two players: one orange player is IT and transfers the role by tagging another player; a short cooldown prevents immediate tag-back.
@@ -103,6 +104,12 @@ Open **Voice / F6**. Voice starts **off**, and the microphone starts **muted**. 
 
 Lobby voice reaches room members; during a match it reaches nearby players within **14 metres**. Voice includes a volume control and individual player mute buttons. Leaving a room or disabling voice stops capture/playback and mutes the microphone. `PM-V003` means microphone permission is pending; `PM-V004` means no input was detected. You can keep listening with your microphone muted. Headset/Windows microphone capture and speaker output remain untested on hardware.
 
+## Settings and map
+
+Open **Settings** from Main or press **F7** on PC. Adjust effects and forest ambience separately, mute game audio, show/hide the round HUD, and change desktop mouse sensitivity, invert look, or field of view (70–100°). Fullscreen is available in desktop mode. Preferences save on your device; **Restore defaults** restores these options. Headset projection remains controlled by OpenXR. Voice keeps its separate opt-in controls; the Settings shortcut opens Voice without enabling the microphone.
+
+The forest hub has signs leading to the treehouse, west cave, and east lookout. Stairs and bridges connect elevated routes, with climbable surfaces for hand movement. The central clearing stays available for monkey chases and Player Tag.
+
 ## Developer access
 
 Only verified IDs in the title-owned developer list can use developer tools. There are no default developer accounts, first-player grants, or grants from names, pictures, XP, or registration.
@@ -118,9 +125,9 @@ Only verified IDs in the title-owned developer list can use developer tools. The
 3. Save the title data and choose **Refresh access** in Account. PlayFab can cache title data for approximately a minute; retry after that if necessary.
 4. A verified developer sees **Dev tools** in Main and Account. Select that button or use **F2 / left Y**; use the right aim ray/trigger for VR buttons. The button disappears when access expires, is revoked, or the player signs out.
 
-Tools include restart, +30 seconds (maximum 300), bot freeze/resume, tag all monkeys, local respawn, and diagnostics. Shared-round tools require a running round and an offline player or host. Developer clients can use local respawn/diagnostics but cannot change the host's round. Every handler checks current permission and authority, including direct calls; there are no remote developer-action RPCs, shared passwords, or command-line unlocks.
+The redesigned menu has **Round**, **Map**, and **Diagnostics** controls. Round tools include restart, +30 seconds (maximum 300), pause/resume, end round, bot freeze/resume, Slow/Normal/Fast bot pace, and tag all monkeys. Pause freezes the host timer, AI movement, and accepted tags while players can explore. Bot controls apply to Co-op chase. Map tools teleport your own player to safe hub/treehouse/cave/lookout locations, place up to eight local test markers, clear markers, and show collision outlines. Diagnostics show live performance, tracking, and position. Shared-round tools require a running round and an offline player or host. Developer clients can use local respawn, map testing, and diagnostics. Shared round tools require host authority. Every handler checks current permission and authority, including direct calls; there are no remote developer-action RPCs, shared passwords, or command-line unlocks.
 
-The client verifies the session owner using `GetAccountInfo`, then reads developer IDs with `GetTitleData`. Sign-out, failed checks, and expired access close the menu and clear freeze/diagnostics. Access refreshes every four minutes and expires after five; PlayFab caching can delay revocation by roughly another minute. Keep local device credentials private. A PlayFab secret key is neither needed nor bundled.
+The client verifies the session owner using `GetAccountInfo`, then reads developer IDs with `GetTitleData`. Sign-out, failed checks, and expired access close the menu and clear local markers/outlines and developer toggles. Host pause and bot pace reset when the host loses access; restarting also clears testing state. Access refreshes every four minutes and expires after five; PlayFab caching can delay revocation by roughly another minute. Keep local device credentials private. A PlayFab secret key is neither needed nor bundled.
 
 ## Rebuild
 

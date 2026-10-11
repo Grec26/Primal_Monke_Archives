@@ -14,9 +14,20 @@ var push_velocity := Vector3.ZERO
 var hand_shape := SphereShape3D.new()
 var desktop_yaw := 0.0
 var desktop_pitch := 0.0
+var mouse_sensitivity := 1.0
+var invert_y := false
+var look_fov := 75.0:
+	set(value):
+		look_fov = value
+		apply_desktop_settings()
 
 func _ready() -> void:
 	hand_shape.radius = 0.09
+
+func apply_desktop_settings() -> void:
+	# Headset projection comes from the XR runtime, rather than this PC preference.
+	if not xr_running and is_instance_valid(head):
+		head.fov = look_fov
 
 func reset_player() -> void:
 	global_position = Vector3(0, 0.1, -5)
@@ -48,6 +59,7 @@ func resolve_hand(anchor: Vector3, desired: Vector3) -> Dictionary:
 
 func _physics_process(delta: float) -> void:
 	if not xr_running:
+		apply_desktop_settings()
 		tracked = input_allowed
 		if not input_allowed:
 			velocity = Vector3.ZERO
@@ -116,5 +128,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED if event.pressed else Input.MOUSE_MODE_VISIBLE
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		desktop_yaw -= event.relative.x * 0.004
-		desktop_pitch = clampf(desktop_pitch - event.relative.y * 0.004, -1.2, 1.2)
+		_apply_mouse_look(event.relative)
+
+func _apply_mouse_look(relative: Vector2) -> void:
+	desktop_yaw -= relative.x * 0.004 * mouse_sensitivity
+	var pitch_direction := 1.0 if invert_y else -1.0
+	desktop_pitch = clampf(desktop_pitch + relative.y * 0.004 * mouse_sensitivity * pitch_direction, -1.2, 1.2)

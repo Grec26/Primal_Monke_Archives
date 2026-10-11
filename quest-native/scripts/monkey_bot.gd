@@ -10,6 +10,7 @@ var home := Vector3.ZERO
 var target := Vector3.ZERO
 var next_choice := 0.0
 var elapsed := 0.0
+var speed_multiplier := 1.0
 
 func reset_bot() -> void:
 	global_position = home
@@ -40,8 +41,8 @@ func _physics_process(delta: float) -> void:
 		direction = direction.normalized()
 		rotation.y = lerp_angle(rotation.y, atan2(direction.x, direction.z), delta * 5)
 	else: direction = Vector3.ZERO
-	velocity.x = direction.x * 2.1
-	velocity.z = direction.z * 2.1
+	velocity.x = direction.x * 2.1 * clampf(speed_multiplier, 0.65, 1.4)
+	velocity.z = direction.z * 2.1 * clampf(speed_multiplier, 0.65, 1.4)
 	velocity.y = -1 if is_on_floor() else velocity.y - 9.8 * delta
 	move_and_slide()
 	if is_on_wall(): next_choice = 0

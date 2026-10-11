@@ -47,7 +47,7 @@ pm_write_launcher() {
 pm_write_launcher Play-Desktop.bat off desktop
 pm_write_launcher Play-PCVR.bat on pcvr
 cat > "$pm_output_dir/README.txt" <<'README'
-Primal Monke 0.5.1 for Windows
+Primal Monke 0.6.0 for Windows
 
 Extract all four files from the ZIP into the same folder before playing.
 Play-Desktop.bat: keyboard and mouse play.
@@ -58,14 +58,14 @@ uses Link/Air Link or another configured PC OpenXR connection.
 The game loads the forest, then offers Create account or Continue as guest
 on first launch. Choose Play solo for a 90-second monkey chase, or Multiplayer
 lobby for Co-op chase / Player Tag. The main menu also opens Account, Profile,
-Tutorial, and Voice. Resume game continues your round without resetting it.
+Tutorial, Settings, and Voice. Resume game continues your round without resetting it.
 PC VR and Desktop restart the game to switch modes while you are offline.
 
 Desktop controls:
 WASD move; hold right mouse to look; Space jump; E tag a nearby monkey/player.
 R restarts solo or a hosted round. F1 opens the main menu.
 Tab opens the main menu offline or the room menu online.
-F3 Account; F4 Tutorial; F5 Profile/PFP; F6 Voice.
+F3 Account; F4 Tutorial; F5 Profile/PFP; F6 Voice; F7 Settings.
 F2 Developer tools, only when your account has permission.
 Hold V during captured gameplay to talk after enabling voice.
 
@@ -74,7 +74,8 @@ Push solid surfaces with tracked hands to move/climb; release to launch.
 Touch a target with a hand to tag. Right A restarts solo/a hosted round.
 Right B opens the main/room menu; left X opens Account; left Y opens approved
 developer tools. Aim the right controller and pull its trigger for menu buttons.
-Tutorial, Profile, and Voice are available from the main menu.
+Tutorial, Profile, Settings, and Voice are available from the main menu.
+The expanded forest connects cave, treehouse and lookout routes.
 
 Accounts are optional for solo and direct multiplayer. Guests stay offline
 unless they explicitly choose an account action. Returning registered players
@@ -96,7 +97,7 @@ Your name, picture, and level are public to room players. Guest progress stays
 local; signed-in accounts can sync public PlayFab profiles. Failed cloud sync
 retains local progress; use Retry sync. XP grants no developer privileges.
 
-To play with Quest, install the matching 0.5.1 APK and use the same local network.
+To play with Quest, install the matching 0.6.0 APK and use the same local network.
 Choose Multiplayer lobby; Host on one device, then enter its IPv4 address and
 Join on the others. Up to eight players share a room using UDP 7777.
 The host selects Co-op chase or Player Tag, then Start match. Gameplay/timer
@@ -113,6 +114,9 @@ Leaving a room or disabling voice stops capture/playback and mutes the mic.
 Developer tools require the owner's verified PlayFab ID approval. After your
 ID is added to the title-owned list, choose Refresh access in Account.
 Dev tools appears in Main and Account after verification; F2 / left Y also works.
+Round controls add pause/resume, end round and bot pace for the host or solo
+player. Map testing adds local landmark teleports, up to eight markers and
+collision outlines. These tools clear on access revocation or round restart.
 No IDs are granted by this build. Names, PFPs, and XP cannot grant access.
 
 Windows/Quest hardware, real microphone/speaker output, performance, and

@@ -133,6 +133,34 @@ func run_host() -> void:
 	await wait_signal("client1-baseline")
 	await wait_signal("client2-baseline")
 
+	# Mock a current developer lease without invoking account/provider traffic.
+	# The real developer handler, game physics and ENet snapshots remain live.
+	game.account.set_process(false)
+	game.profile.set_process(false)
+	game.account._ticket = "test-only-session-ticket"
+	game.account.account_id = "AABBCCDDEEFF0011"
+	game.account._developer = true
+	game.account._access_until_ms = Time.get_ticks_msec() + 30000
+	game.developer_action("pause_round")
+	check(game.developer_round_paused, "verified host pauses the shared round through the protected developer handler")
+	var developer_paused_time: float = game.remaining
+	write_signal("developer-paused")
+	await wait_signal("client1-pause-observed")
+	await wait_signal("client2-pause-observed")
+	await pause(0.25)
+	check(is_equal_approx(game.remaining, developer_paused_time) and game.score == 0, "host developer pause freezes countdown and rejects nearby client tags")
+	game.developer_action("pause_round")
+	check(not game.developer_round_paused, "verified host resumes the authoritative round")
+	game.account._developer = false
+	game.account._ticket = ""
+	game.account.account_id = ""
+	game.account._access_until_ms = 0
+	game.account.set_process(true)
+	game.profile.set_process(true)
+	write_signal("developer-resumed")
+	await wait_signal("client1-resume-observed")
+	await wait_signal("client2-resume-observed")
+
 	write_signal("far-tag")
 	await wait_signal("client1-far-input")
 	await wait_for(func(): return game.session.members.get(first_id, {}).get("tag", false), "far-away E input reaches host over ENet")
@@ -225,6 +253,23 @@ func run_client() -> void:
 	if role == "client1": check(game.session.avatars.values().any(func(avatar): return avatar.target.get("vr", false)), "desktop client renders a VR participant avatar")
 	else: check(game.session.avatars.values().all(func(avatar): return not avatar.target.get("vr", false)), "VR client renders both desktop participant avatars")
 	write_signal(role + "-baseline")
+
+	await wait_signal("developer-paused")
+	await wait_for(func(): return game.developer_round_paused, "client receives host pause through the actual ENet snapshot")
+	var paused_countdown: float = game.remaining
+	if role == "client1":
+		park_player(Vector3(0, 0.1, 0))
+		e_key(true)
+	await pause(0.3)
+	check(is_equal_approx(game.remaining, paused_countdown) and game.score == 0, "paused client sees stable timer and no accepted nearby tag")
+	game.developer_action("pause_round")
+	check(game.developer_round_paused and not game.developer_action_allowed("pause_round"), "client direct developer call cannot resume the host's paused round")
+	e_key(false)
+	park_player(Vector3(-10, 0.1, -5))
+	write_signal(role + "-pause-observed")
+	await wait_signal("developer-resumed")
+	await wait_for(func(): return not game.developer_round_paused and game.remaining < paused_countdown, "client receives host resume and running timer")
+	write_signal(role + "-resume-observed")
 
 	if role == "client1":
 		await wait_signal("far-tag")

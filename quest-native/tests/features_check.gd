@@ -136,7 +136,7 @@ func check_climbables(game: Node3D) -> void:
 	var deck_query := PhysicsRayQueryParameters3D.create(Vector3(0, 5, 9), Vector3(0, 2, 9), 1)
 	var deck: Dictionary = game.get_world_3d().direct_space_state.intersect_ray(deck_query)
 	check(not deck.is_empty() and deck.collider.name == "TreehouseDeck" and deck.position.y > 2.8, "treehouse deck provides a real elevated collision surface")
-	var step_query := PhysicsRayQueryParameters3D.create(Vector3(5, 5, 7.6), Vector3(5, 1, 7.6), 1)
+	var step_query := PhysicsRayQueryParameters3D.create(Vector3(7.3, 5, 7.6), Vector3(7.3, 1, 7.6), 1)
 	var step: Dictionary = game.get_world_3d().direct_space_state.intersect_ray(step_query)
 	check(not step.is_empty() and str(step.collider.name).begins_with("ClimbStep"), "new stepping route has colliders the player can climb")
 

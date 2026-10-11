@@ -40,6 +40,10 @@ var voice_menu: Node3D
 var tutorial: Node3D
 var sounds: Node
 var onboarding: Node
+var settings: Node
+var settings_menu: Node3D
+var forest_map: Node3D
+var developer_tools: Node3D
 var local_tag_count := 0
 var _profile_level := 1
 var _progress_round := ""
@@ -59,6 +63,8 @@ var dev_menu: Node3D
 var requested_play_mode := "auto"
 var play_mode_notice := ""
 var developer_bots_frozen := false
+var developer_round_paused := false
+var developer_bot_speed := 1.0
 var diagnostics_enabled := false
 var diagnostics_board: Label3D
 var _developer_message := "Developer access verified"
@@ -163,28 +169,7 @@ func _ready() -> void:
 	sun.light_energy = 1.1
 	sun.shadow_enabled = false
 	add_child(sun)
-	box("ForestFloor", Vector3(0, -0.5, 0), Vector3(32, 1, 32), "47613a")
-	box("NorthCliff", Vector3(0, 3, 16), Vector3(34, 7, 1), "566451")
-	box("SouthCliff", Vector3(0, 3, -16), Vector3(34, 7, 1), "566451")
-	box("EastCliff", Vector3(16, 3, 0), Vector3(1, 7, 32), "566451")
-	box("WestCliff", Vector3(-16, 3, 0), Vector3(1, 7, 32), "566451")
-	for i in range(12):
-		var angle := float(i) * TAU / 12
-		var location := Vector3(cos(angle) * 10, 0, sin(angle) * 10)
-		box("Tree%s" % i, location + Vector3.UP * 3, Vector3(1.1, 6, 1.1), "684930")
-		box("Branch%s" % i, location + Vector3.UP * 2.5, Vector3(3.2, 0.3, 0.8), "785738")
-		sphere(self, location + Vector3.UP * 6.8, Vector3(2.9, 2.1, 2.5), mat("3c7344"))
-	box("LowRock", Vector3(-3, 0.5, 1), Vector3(3, 1, 2), "81876b")
-	box("HighRock", Vector3(-4, 1.25, 3), Vector3(2, 2.5, 2), "6f7861")
-	# Original climbable routes for arm-driven chases and player tag.
-	box("TreehouseDeck", Vector3(0, 2.8, 9), Vector3(6, 0.3, 4), "8d683d")
-	for side in [-1.0, 1.0]:
-		box("TreehousePost%s" % side, Vector3(side * 2.6, 1.4, 9), Vector3(0.35, 2.8, 0.35), "694b2e")
-		box("ClimbingPole%s" % side, Vector3(side * 2.4, 2.8, 6.8), Vector3(0.18, 5.6, 0.18), "b28e56")
-	box("TreehouseRoof", Vector3(0, 5.5, 9), Vector3(6.5, 0.25, 4.4), "365c37")
-	for index in range(7):
-		box("ClimbStep%s" % index, Vector3(5.0, 0.22 + index * 0.38, 4.0 + index * 0.6), Vector3(1.8, 0.36, 0.85), "907348")
-	box("BridgeRoute", Vector3(3.2, 2.8, 9), Vector3(2.4, 0.18, 0.8), "9a7645")
+	forest_map = _component("res://scripts/forest_map.gd", "ForestMap") as Node3D
 	create_player()
 	if get_viewport().use_xr and xr is OpenXRInterface:
 		xr.pose_recentered.connect(player.reset_tracking_history)
@@ -258,6 +243,9 @@ func _component(path: String, component_name: String) -> Node:
 
 func _initialize_features() -> void:
 	sounds = _component("res://scripts/game_sounds.gd", "GameSounds")
+	settings = _component("res://scripts/settings_state.gd", "SettingsState")
+	settings_menu = _component("res://scripts/settings_menu.gd", "SettingsMenu") as Node3D
+	developer_tools = _component("res://dev/developer_tools.gd", "DeveloperTools") as Node3D
 	profile = _component("res://scripts/profile_state.gd", "ProfileState")
 	voice = _component("res://scripts/voice_chat.gd", "VoiceChat")
 	profile_menu = _component("res://scripts/profile_menu.gd", "ProfileMenu") as Node3D
@@ -268,7 +256,7 @@ func _initialize_features() -> void:
 		profile.connect("public_profile_changed", _profile_changed)
 		profile.call("account_changed")
 	# Bind GUI buttons once. VR actions use the shared menu ray handler.
-	for menu in [main_menu, lobby, account_menu, profile_menu, voice_menu]:
+	for menu in [main_menu, lobby, account_menu, profile_menu, voice_menu, settings_menu]:
 		if menu == null: continue
 		var buttons: Variant = menu.get("_desktop_buttons")
 		if buttons is Dictionary:
@@ -276,7 +264,7 @@ func _initialize_features() -> void:
 				if button is Button: button.pressed.connect(func(): play_ui_sound("click"))
 
 func _feature_menus() -> Array:
-	return [profile_menu, voice_menu, tutorial]
+	return [profile_menu, voice_menu, tutorial, settings_menu]
 
 func _feature_open() -> bool:
 	for menu in _feature_menus():
@@ -305,6 +293,9 @@ func close_feature_menu(menu: Node) -> void:
 		menu.call("set_open", false)
 		_changing_frontend = false
 	on_account_menu_closed()
+
+func open_settings_menu() -> void:
+	if frontend_state != "loading" and settings_menu != null: settings_menu.call("set_open", true)
 
 func open_profile_menu() -> void:
 	if frontend_state != "loading" and profile_menu != null: profile_menu.call("set_open", true)
@@ -581,32 +572,61 @@ func _account_changed() -> void:
 			dev_menu = null
 		developer_bots_frozen = false
 		diagnostics_enabled = false
+		if session == null or not session.is_client(): developer_round_paused = false
+		developer_bot_speed = 1.0
+		if is_instance_valid(developer_tools): developer_tools.call("reset")
 	if is_instance_valid(main_menu): main_menu.refresh_status()
 	if is_instance_valid(account_menu): account_menu.refresh_status()
 
 func developer_action_allowed(action: String) -> bool:
 	if not account_is_developer or frontend_state == "loading": return false
 	if action in ["respawn", "diagnostics"]: return true
-	if action not in ["restart", "add_time", "freeze_bots", "tag_all"]: return false
+	if action in ["teleport_hub", "teleport_treehouse", "teleport_lookout", "teleport_cave", "place_marker", "clear_markers", "map_bounds"]:
+		return is_instance_valid(developer_tools)
+	if action not in ["restart", "add_time", "freeze_bots", "tag_all", "pause_round", "bot_speed", "end_round"]: return false
+	if action in ["freeze_bots", "tag_all", "bot_speed"] and room_game_mode != "co_op": return false
+	if action == "tag_all" and developer_round_paused: return false
 	if frontend_state != "playing" or (network_mode != "offline" and session.phase != "playing"): return false
 	return session != null and not session.is_client()
 
 func developer_action(action: String) -> void:
-	# Menu buttons, shortcuts, and direct calls all pass the same role/authority gate.
+	# All UI routes and direct calls use the current verified role and authority.
 	if not developer_action_allowed(action): return
 	match action:
-		"restart": restart()
+		"restart":
+			restart()
+			_developer_message = "Round restarted"
 		"add_time":
 			if score < bots.size():
 				remaining = minf(300, remaining + 30)
 				finished = false
-		"freeze_bots": developer_bots_frozen = not developer_bots_frozen
+				_developer_message = "Added 30 seconds · maximum 300"
+		"freeze_bots":
+			developer_bots_frozen = not developer_bots_frozen
+			_developer_message = "Bots frozen" if developer_bots_frozen else "Bots resumed"
 		"tag_all":
 			for bot in bots: tag_bot(bot)
-		"respawn": player.reset_player()
-		"diagnostics": diagnostics_enabled = not diagnostics_enabled
-	_developer_message = "Bots frozen" if developer_bots_frozen else "Developer access verified"
-	if session.is_host(): session._send_snapshot()
+			_developer_message = "Tagged all monkeys"
+		"respawn":
+			player.reset_player()
+			_developer_message = "Returned to forest hub"
+		"diagnostics":
+			diagnostics_enabled = not diagnostics_enabled
+			_developer_message = "Diagnostics on" if diagnostics_enabled else "Diagnostics off"
+		"pause_round":
+			developer_round_paused = not developer_round_paused
+			_developer_message = "Round paused · players can explore" if developer_round_paused else "Round resumed"
+		"bot_speed":
+			developer_bot_speed = 0.65 if developer_bot_speed == 1.0 else (1.4 if developer_bot_speed == 0.65 else 1.0)
+			_developer_message = "Bot pace: " + ("Slow" if developer_bot_speed == 0.65 else ("Fast" if developer_bot_speed == 1.4 else "Normal"))
+		"end_round":
+			remaining = 0.0
+			finished = true
+			developer_round_paused = false
+			_developer_message = "Round ended"
+		_:
+			_developer_message = str(developer_tools.call("perform", action))
+	if session != null and session.is_host(): session._send_snapshot()
 
 func host_session() -> void:
 	if frontend_state == "loading": return
@@ -706,6 +726,9 @@ func restart() -> void:
 	for bot in bots: bot.reset_bot()
 	last_board = ""
 	developer_bots_frozen = false
+	developer_round_paused = false
+	developer_bot_speed = 1.0
+	if is_instance_valid(developer_tools): developer_tools.call("reset")
 	_developer_message = "Developer access verified"
 	if session != null: session.round_restarted()
 
@@ -713,7 +736,7 @@ func tag_bot(bot: BotScript, tagger := 0) -> void:
 	if frontend_state != "playing" or (session != null and network_mode != "offline" and session.phase != "playing"): return
 	if session != null and session.is_client(): return
 	if room_game_mode != "co_op": return
-	if finished or bot.tagged: return
+	if finished or bot.tagged or developer_round_paused: return
 	bot.tag()
 	score += 1
 	if tagger == 0: tagger = multiplayer.get_unique_id()
@@ -740,7 +763,8 @@ func _physics_process(delta: float) -> void:
 	var authority := session == null or not session.is_client()
 	for bot in bots:
 		bot.visible = room_game_mode == "co_op"
-		bot.active = room_game_mode == "co_op" and authority and active and not finished and not developer_bots_frozen
+		bot.active = room_game_mode == "co_op" and authority and active and not finished and not developer_bots_frozen and not developer_round_paused
+		bot.speed_multiplier = developer_bot_speed if authority else 1.0
 		bot.use_network_target = session != null and session.is_host()
 		if bot.use_network_target:
 			var closest := INF
@@ -749,7 +773,7 @@ func _physics_process(delta: float) -> void:
 				if distance < closest:
 					closest = distance
 					bot.chase_position = pose.head
-	if authority and active and not finished:
+	if authority and active and not finished and not developer_round_paused:
 		remaining = maxf(0, remaining - delta)
 		for bot in bots:
 			if room_game_mode != "co_op": break
@@ -761,9 +785,13 @@ func _physics_process(delta: float) -> void:
 				elif pose.tag and pose.head.distance_to(target) < 1.7: tag_bot(bot, int(pose.get("peer_id", multiplayer.get_unique_id())))
 		if remaining <= 0: finished = true
 	_update_progress()
+	var show_hud := settings == null or bool(settings.get("hud_visible"))
+	board.visible = frontend_state == "playing" and show_hud
+	desktop_label.visible = frontend_state == "playing" and show_hud and not player.xr_running
 	var title := "ALL MONKEYS TAGGED!" if score == 5 else ("TIME'S UP!" if finished else "FOREST CHASE")
 	if room_game_mode == "tag": title = "TIME'S UP!" if finished else ("YOU ARE IT!" if session.call("is_local_tagger") else "RUN FROM THE ORANGE MONKE")
 	var status := "Push surfaces to move. Touch monkeys to tag." if player.xr_running else "WASD / right mouse: look / Space / E: tag"
+	if developer_round_paused: status = "Round paused by developer · explore the forest"
 	if not active: status = "Paused — close menu / restore headset + controller tracking"
 	status += "\nRight B / Tab: menu · F1: main menu · " + network_mode
 	if session != null and session.is_client(): status += " · Host restarts"

@@ -4,7 +4,7 @@
 
 ## Start playing
 
-Version **0.5.1** adds updated menus, first-run registration, support error codes, picture uploads/PFPs, cosmetic levels, Player Tag, optional voice, tutorials, original audio, and a climbable treehouse. Startup loads the forest, then offers **Create account** or **Continue as guest** on first launch. The main menu opens **Play solo**, **Multiplayer lobby**, **Account**, **Profile**, **Tutorial**, and **Voice**. **Resume game** continues an existing round without resetting it.
+Version **0.6.0** adds updated menus, first-run registration, support error codes, picture uploads/PFPs, cosmetic levels, Player Tag, optional voice, tutorials, original audio, and a climbable treehouse. Startup loads the forest, then offers **Create account** or **Continue as guest** on first launch. Settings adds sound, mouse sensitivity, invert look, FOV, HUD, and fullscreen preferences. The forest adds cave/lookout routes, and the developer menu adds round and map testing controls. The main menu opens **Play solo**, **Multiplayer lobby**, **Account**, **Profile**, **Tutorial**, and **Voice**. **Resume game** continues an existing round without resetting it.
 
 Press **F1** for the main menu. **Tab** on desktop or right **B** in VR opens the main menu offline and the room menu online. In a waiting room, movement, tags, and the timer remain paused until the host chooses **Start match**.
 
@@ -27,6 +27,7 @@ In VR, push surfaces with tracked controllers to move and climb. Touch monkeys o
 | Tab | Main menu offline / room menu online |
 | F3 | Account; left X in VR |
 | F2 | Developer tools with permission; left Y in VR |
+| F7 | Settings; also available from Main in VR |
 | F4 | Tutorial |
 | F5 | Profile and picture upload |
 | F6 | Voice settings |
@@ -50,7 +51,7 @@ The owner approves selected PlayFab IDs through title **1A7D9B**'s `PrimalMonkeD
 
 ## Play with Quest
 
-Use the matching **0.5.1** [Quest APK](../apk/README.md). Unity 2021.3.21f1 and WebXR remain separate single-player projects.
+Use the matching **0.6.0** [Quest APK](../apk/README.md). Unity 2021.3.21f1 and WebXR remain separate single-player projects.
 
 1. Connect PC and Quest to the same local network, then choose **Multiplayer lobby**.
 2. One device chooses **Host** and shares the local IPv4 address shown in its lobby. Other players enter it and choose **Join**.

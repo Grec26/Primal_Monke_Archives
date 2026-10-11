@@ -2,7 +2,7 @@
 
 [Download PrimalMonke-Quest.apk](https://github.com/Grec26/Primal_Monke_Archives/raw/refs/heads/main/apk/PrimalMonke-Quest.apk)
 
-Native Godot OpenXR **0.5.1** test build for an ARM64 Quest headset, with arm-driven movement, updated menus/loading screens, a climbable forest/treehouse, original audio, and eight-player crossplay with the matching [Windows/PC VR build](../pc/README.md). Choose Co-op chase against five AI monkeys or multiplayer Player Tag. Profiles add public names/PFPs and cosmetic levels; tutorials and opt-in voice are available from the main menu. Unity 2021.3.21f1 and WebXR remain separate single-player projects.
+Native Godot OpenXR **0.6.0** test build for an ARM64 Quest headset, with arm-driven movement, updated menus/loading screens, a climbable forest/treehouse, original audio, and eight-player crossplay with the matching [Windows/PC VR build](../pc/README.md). Choose Co-op chase against five AI monkeys or multiplayer Player Tag. Settings saves sound and HUD preferences locally. The expanded map has a cave, lookout, and climbing routes. The updated developer menu adds round and map testing tools for approved accounts. Profiles add public names/PFPs and cosmetic levels; tutorials and opt-in voice are available from the main menu. Unity 2021.3.21f1 and WebXR remain separate single-player projects.
 
 ## Install and play
 

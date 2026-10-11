@@ -4,7 +4,7 @@ extends Node
 const PORT := 7777
 const MAX_PLAYERS := 8
 const PROTOCOL := 2
-const GAME_VERSION := "0.5.1"
+const GAME_VERSION := "0.6.0"
 const STALE_MS := 2000
 const TAG_COOLDOWN_MS := 1250
 const PROFILE_INTERVAL_MS := 1000
@@ -193,7 +193,7 @@ func _hello(protocol: int, version: String) -> void:
 	var sender := multiplayer.get_remote_sender_id()
 	if sender <= 1: return
 	if protocol != PROTOCOL or version != GAME_VERSION:
-		_rejected.rpc_id(sender, "Version mismatch — install matching PC and Quest 0.5.1 builds")
+		_rejected.rpc_id(sender, "Version mismatch — install matching PC and Quest 0.6.0 builds")
 		return
 	if members.has(sender):
 		# Repeating a handshake cannot reset a member's pose or match score.
@@ -337,6 +337,7 @@ func _distance_to_body(point: Vector3, head: Vector3) -> float:
 
 func _advance_player_tags() -> void:
 	if not is_host() or game_mode != "tag" or phase != "playing" or game.finished or members.size() < 2: return
+	if game.get("developer_round_paused") == true: return
 	if Time.get_ticks_msec() < tag_cooldown_until or not members.has(tagger_id): return
 	var source: Dictionary = members[tagger_id]
 	if not _usable_tag_pose(source): return
@@ -438,6 +439,7 @@ func make_snapshot() -> Dictionary:
 	snapshot_sequence += 1
 	return {"sequence": snapshot_sequence, "round": round_id, "remaining": game.remaining,
 		"score": game.score, "finished": game.finished, "bots": bot_state, "players": players,
+		"developer_paused": game.get("developer_round_paused") == true,
 		"phase": phase, "ready": phase == "playing", "game_mode": game_mode,
 		"tagger": tagger_id, "tag_scores": tag_scores.duplicate(), "tag_transfers": tag_transfers}
 
@@ -470,6 +472,7 @@ func apply_snapshot(state: Dictionary) -> void:
 	game.remaining = state.remaining
 	game.score = state.score
 	game.finished = state.finished
+	game.set("developer_round_paused", state.get("developer_paused", false) == true)
 	bot_targets = state.bots
 	for i in range(game.bots.size()):
 		var bot = game.bots[i]

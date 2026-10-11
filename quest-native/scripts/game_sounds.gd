@@ -20,6 +20,7 @@ const EFFECTS_BUS := "Primal Effects"
 var game: Node3D
 var muted := false
 var gain := 1.0
+var ambience_gain := 1.0
 var _streams: Dictionary = {}
 var _flat_voices: Array[AudioStreamPlayer] = []
 var _spatial_voices: Array[AudioStreamPlayer3D] = []
@@ -44,8 +45,11 @@ func _ready() -> void:
 		AudioServer.add_bus_effect(bus_index, limiter)
 	var preferences := ConfigFile.new()
 	if preferences.load(PREFERENCE_PATH) == OK:
-		muted = bool(preferences.get_value("audio", "muted", false))
-		gain = clampf(float(preferences.get_value("audio", "gain", 1.0)), 0.0, 1.0)
+		var saved_muted: Variant = preferences.get_value("audio", "muted", false)
+		muted = saved_muted if saved_muted is bool else false
+		gain = _validated_gain(preferences.get_value("audio", "gain", 1.0), 1.0)
+		# Older audio preferences used one gain for both effects and ambience.
+		ambience_gain = _validated_gain(preferences.get_value("audio", "ambience_gain", gain), gain)
 	for cue in CUES:
 		_streams[cue] = load(CUES[cue]) as AudioStreamWAV
 	for index in range(MAX_VOICES):
@@ -77,7 +81,13 @@ func _save_preferences() -> void:
 	var preferences := ConfigFile.new()
 	preferences.set_value("audio", "muted", muted)
 	preferences.set_value("audio", "gain", gain)
+	preferences.set_value("audio", "ambience_gain", ambience_gain)
 	preferences.save(PREFERENCE_PATH)
+
+func _validated_gain(value: Variant, fallback: float) -> float:
+	if not (value is int or value is float) or not is_finite(float(value)):
+		return fallback
+	return clampf(float(value), 0.0, 1.0)
 
 func _apply_volume() -> void:
 	var level := MASTER_DB + linear_to_db(maxf(gain, 0.0001))
@@ -86,7 +96,7 @@ func _apply_volume() -> void:
 	for voice in _spatial_voices:
 		voice.volume_db = level
 	if _ambience != null:
-		_ambience.volume_db = level - 15.0
+		_ambience.volume_db = MASTER_DB + linear_to_db(maxf(ambience_gain, 0.0001)) - 15.0
 
 func set_muted(value: bool) -> void:
 	muted = value
@@ -99,7 +109,12 @@ func set_muted(value: bool) -> void:
 		_ambience.play()
 
 func set_gain(value: float) -> void:
-	gain = clampf(value, 0.0, 1.0)
+	gain = _validated_gain(value, gain)
+	_apply_volume()
+	_save_preferences()
+
+func set_ambience_gain(value: float) -> void:
+	ambience_gain = _validated_gain(value, ambience_gain)
 	_apply_volume()
 	_save_preferences()
 

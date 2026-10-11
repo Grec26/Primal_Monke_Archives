@@ -231,7 +231,8 @@ func test_developer_and_vr_routes(game: Node3D) -> void:
 			var target: Vector3 = menu._world_panel.to_global(Vector3(center.x, center.y, 0))
 			var normal: Vector3 = menu._world_panel.global_basis.z
 			var hit: Dictionary = menu._intersect_panel(target + normal, -normal)
-			all_reachable = all_reachable and hit.get("button", -1) == index
+			var selected: int = hit.get("button", -1)
+			all_reachable = all_reachable and (selected == index if menu._world_buttons[index].mesh.visible else selected != index)
 		check(all_inside and all_reachable, "%s VR buttons fit their panel and accept front-facing controller rays" % menu.name)
 	game.account.sign_out()
 	await process_frame

@@ -57,6 +57,7 @@ func _action_enabled(action: String) -> bool:
 		"multiplayer": return game.has_method("open_multiplayer_lobby")
 		"account": return game.has_method("open_account_menu")
 		"developer": return game.has_method("can_open_developer_menu") and game.has_method("open_developer_menu") and bool(game.call("can_open_developer_menu"))
+		"settings": return game.has_method("open_settings_menu")
 		"profile": return game.has_method("open_profile_menu")
 		"tutorial": return game.has_method("open_tutorial_menu")
 		"voice": return game.has_method("open_voice_menu")
@@ -73,6 +74,7 @@ func _dispatch(action: String) -> void:
 		"multiplayer": game.call("open_multiplayer_lobby")
 		"account": game.call("open_account_menu")
 		"developer": game.call("open_developer_menu")
+		"settings": game.call("open_settings_menu")
 		"profile": game.call("open_profile_menu")
 		"tutorial": game.call("open_tutorial_menu")
 		"voice": game.call("open_voice_menu")
@@ -182,6 +184,7 @@ func _create_desktop_menu() -> void:
 	_menu_button(_desktop_utilities, "Account", "account")
 	_menu_button(_desktop_utilities, "Tutorial", "tutorial")
 	_menu_button(_desktop_utilities, "Voice controls", "voice")
+	_menu_button(content, "Settings", "settings")
 	_menu_button(content, "Dev tools", "developer")
 	if OS.get_name() != "Android":
 		var mode_row := HBoxContainer.new()
@@ -238,7 +241,9 @@ func _create_world_menu() -> void:
 	_world_button("ACCOUNT", "account", Vector2(0.385, -0.055), Vector2(0.69, 0.12))
 	_world_button("TUTORIAL", "tutorial", Vector2(-0.385, -0.225), Vector2(0.69, 0.12))
 	_world_button("VOICE", "voice", Vector2(0.385, -0.225), Vector2(0.69, 0.12))
-	_world_button("RESUME GAME", "resume", Vector2(0, -0.395), Vector2(1.46, 0.12))
+	_world_button("SETTINGS", "settings", Vector2(-0.385, -0.395), Vector2(0.69, 0.12))
+	_world_button("RESUME GAME", "resume", Vector2(0.385, -0.395), Vector2(0.69, 0.12))
+	_world_buttons.back()["label"].font_size = 24
 	if OS.get_name() != "Android":
 		_world_button("PC VR", "pcvr", Vector2(-0.385, -0.56), Vector2(0.69, 0.12))
 		_world_button("DESKTOP", "desktop", Vector2(0.385, -0.56), Vector2(0.69, 0.12))

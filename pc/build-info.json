@@ -1,17 +1,17 @@
 {
   "file": "PrimalMonke-Windows.zip",
-  "bytes": 39460849,
-  "sha256": "6bdbb1c5dc4957cbe34c09f870a9c3df76a46c73c221e620ba2b2e5c7b3266a3",
+  "bytes": 39490735,
+  "sha256": "9ed2b4f6a2e84331c270db1a2da760350e7d40cd16fe2f1cf23ce032a8faed41",
   "executable": {
     "file": "PrimalMonke.exe",
-    "bytes": 108209808,
-    "sha256": "b6dde7824f994a5b44ac1ba791dd15e4212c536b83964ba222e984e8d23087d0",
+    "bytes": 108240320,
+    "sha256": "2f0e6f6cf4749b59351f474cb7f858e68c078db975373a3bfd5433dd807487a1",
     "format": "PE32+",
     "architecture": "x86_64",
     "game_data_embedded": true,
     "codesigned": false
   },
-  "version": "0.5.1",
+  "version": "0.6.0",
   "engine": "Godot 4.6.3",
   "archive_integrity_verified": true,
   "archive_files": [
@@ -22,8 +22,8 @@
   ],
   "desktop_and_pcvr_launchers_verified": true,
   "launcher_line_endings": "CRLF",
-  "embedded_pack_resources": 77,
-  "embedded_pack_bytes": 3532932,
+  "embedded_pack_resources": 85,
+  "embedded_pack_bytes": 3563444,
   "embedded_pack_payload_md5_verified": true,
   "main_scene": "res://boot.tscn",
   "embedded_pack_account_developer_and_play_mode_resources_verified": true,
@@ -63,7 +63,7 @@
     256
   ],
   "embedded_pack_linux_headless_startup_passed": true,
-  "exact_embedded_pack_checks_passed": 600,
+  "exact_embedded_pack_checks_passed": 1254,
   "native_smoke_checks_passed": 16,
   "feature_integration_checks_passed": 50,
   "registration_ui_mock_checks_passed": 80,
@@ -89,7 +89,141 @@
   "staged_lobby_start_verified": true,
   "cold_headset_menu_placement_simulation_verified": true,
   "boot_player_camera_handoff_verified": true,
+  "exact_embedded_pack_checks_by_suite": {
+    "smoke_check": 16,
+    "features_check": 50,
+    "error_codes_check": 57,
+    "registration_ui_check": 80,
+    "voice_check": 76,
+    "tutorial_sound_check": 64,
+    "profile_check": 94,
+    "developer_access_check": 289,
+    "developer_button_check": 116,
+    "settings_check": 38,
+    "map_check": 143,
+    "developer_tools_check": 142,
+    "frontend_check": 49,
+    "tag_mode_check": 40
+  },
+  "error_code_checks_passed": 57,
+  "profile_checks_passed": 94,
+  "voice_checks_passed": 76,
+  "tutorial_and_sound_checks_passed": 64,
+  "player_tag_checks_passed": 40,
+  "settings_checks_passed": 38,
+  "expanded_map_checks_passed": 143,
+  "developer_tools_checks_passed": 142,
+  "embedded_pack_forest_map_settings_and_developer_tools_resources_verified": true,
+  "profile_picture_and_display_name_validation_verified": true,
+  "profile_pending_cosmetic_restart_verified": true,
+  "cloud_profile_request_shapes_mock_verified": true,
+  "cosmetic_xp_and_levels_verified": true,
+  "tutorial_practice_progression_verified": true,
+  "imported_qoa_audio_decoded_in_memory_verified": true,
+  "independent_effects_and_ambience_settings_verified": true,
+  "settings_persistence_restore_defaults_and_malformed_preferences_verified": true,
+  "settings_desktop_controls_and_simulated_vr_routes_verified": true,
+  "settings_audio_changes_do_not_enable_microphone_verified": true,
+  "expanded_map_capsule_clearance_ground_and_stair_routes_verified": true,
+  "expanded_map_simulated_vr_hand_collisions_verified": true,
+  "expanded_map_landmarks": [
+    "hub",
+    "treehouse",
+    "lookout",
+    "cave"
+  ],
+  "expanded_map_solids": 88,
+  "expanded_map_shared_materials": 13,
+  "developer_tools_verified_role_loading_expiry_logout_and_revocation_verified": true,
+  "developer_tools_host_round_pause_end_and_bot_pace_verified": true,
+  "developer_tools_local_safe_teleports_markers_and_collision_bounds_verified": true,
+  "developer_tools_desktop_and_simulated_vr_pages_verified": true,
+  "developer_tools_hidden_vr_page_ray_targets_excluded_verified": true,
+  "developer_tools_shared_controls_reject_clients_verified": true,
+  "crossplay_integration": {
+    "passed": true,
+    "scope": "Source game, three Linux headless processes",
+    "peers": 3,
+    "mixed_desktop_vr_poses": true,
+    "transport": "ENet UDP",
+    "assertions_passed": 148,
+    "staged_lobby_start_verified": true,
+    "host_pause_resume_remote_propagation_verified": true,
+    "paused_nearby_tag_rejection_verified": true
+  },
+  "player_tag_integration": {
+    "passed": true,
+    "scope": "Source game, three Linux headless processes",
+    "peers": 3,
+    "assertions_passed": 116,
+    "host_authoritative": true
+  },
+  "voice_relay_integration": {
+    "passed": true,
+    "scope": "Source game, three Linux headless processes",
+    "peers": 3,
+    "assertions_passed": 29,
+    "synthetic_audio": true,
+    "microphone_used": false
+  },
+  "source_linux_graphical_menu_map_and_developer_tools_qa_passed": true,
+  "source_graphical_qa_assertions_passed": 39,
+  "source_graphical_qa_desktop_viewports": [
+    [
+      1280,
+      900
+    ],
+    [
+      520,
+      900
+    ],
+    [
+      520,
+      540
+    ]
+  ],
+  "source_graphical_qa_desktop_menus": [
+    "main",
+    "settings",
+    "developer"
+  ],
+  "source_graphical_qa_simulated_world_panels": [
+    "Settings",
+    "Developer round page",
+    "Developer map page"
+  ],
+  "source_graphical_qa_map_views": [
+    "overview",
+    "canopy_loop",
+    "cave_approach",
+    "lookout_approach"
+  ],
+  "source_graphical_qa_screenshots": 26,
+  "source_graphical_qa_real_hardware_tested": false,
   "previous_release_validation": {
+    "version": "0.5.1",
+    "commit": "f46b22badb12719719c563502e73af9ab8f165c4",
+    "scope": "Recorded checks for the previous release; separate from the current release verification.",
+    "exact_embedded_pack_checks_passed": 600,
+    "native_smoke_checks_passed": 16,
+    "feature_integration_checks_passed": 50,
+    "registration_ui_mock_checks_passed": 80,
+    "account_registration_access_and_play_mode_checks_passed": 289,
+    "frontend_checks_passed": 49,
+    "developer_button_checks_passed": 116,
+    "source_linux_graphical_developer_button_menu_qa_passed": true,
+    "source_linux_graphical_developer_button_menu_qa_menus": [
+      "main",
+      "account"
+    ],
+    "source_linux_graphical_developer_button_menu_qa_widths": [
+      1280,
+      520
+    ],
+    "source_simulated_world_developer_button_menu_qa_passed": true,
+    "source_developer_button_visual_qa_assertions_passed": 15
+  },
+  "historical_release_validation": {
     "version": "0.5.0",
     "commit": "e3af5ccdf454c4248361c4047c4c63937bbb652d",
     "scope": "Recorded checks for the previous release; not rerun for the developer-button patch.",
@@ -153,16 +287,5 @@
       520
     ],
     "source_world_profile_voice_and_tutorial_panel_qa_passed": true
-  },
-  "source_linux_graphical_developer_button_menu_qa_passed": true,
-  "source_linux_graphical_developer_button_menu_qa_menus": [
-    "main",
-    "account"
-  ],
-  "source_linux_graphical_developer_button_menu_qa_widths": [
-    1280,
-    520
-  ],
-  "source_simulated_world_developer_button_menu_qa_passed": true,
-  "source_developer_button_visual_qa_assertions_passed": 15
+  }
 }
