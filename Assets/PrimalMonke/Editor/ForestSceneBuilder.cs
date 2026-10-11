@@ -91,7 +91,7 @@ namespace PrimalMonke.Editor
             boardObject.transform.position = new Vector3(0, 2.4f, -1.5f);
             boardObject.transform.rotation = Quaternion.Euler(0, 180, 0);
             var board = boardObject.AddComponent<TextMesh>();
-            board.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            board.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
             boardObject.GetComponent<MeshRenderer>().sharedMaterial = board.font.material;
             board.anchor = TextAnchor.MiddleCenter; board.alignment = TextAlignment.Center;
             board.fontSize = 48; board.characterSize = .045f; board.color = new Color(1, .9f, .63f);

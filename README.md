@@ -4,15 +4,15 @@ An original single-player Unity VR tag prototype inspired by arm-driven locomoti
 
 ## Open and play
 
-1. Install **Unity 6000.0.58f1** using Unity Hub. For standalone Quest builds, include Android Build Support, SDK/NDK tools, and OpenJDK.
+1. Install **Unity 2021.3.21f1** using Unity Hub. For standalone Quest builds, include Android Build Support, SDK/NDK tools, and OpenJDK.
 2. Open this repository folder as a Unity project and allow the pinned OpenXR and XR Management packages to resolve.
 3. The editor generates `Assets/PrimalMonke/Scenes/Forest.unity` on first import. Alternatively choose **Primal Monke → Create Forest Scene**. Rebuilding replaces the generated scene; save your work first.
 4. Under **Edit → Project Settings → XR Plug-in Management**, enable **OpenXR** for your target platform. Add your controller interaction profile (for example, Oculus Touch) under OpenXR. Run **Project Validation** and resolve required issues.
-5. For PC VR, connect your headset, start its OpenXR runtime, open Forest, and press Play. For Quest, switch to Android in Build Profiles, enable OpenXR for Android and the Meta Quest feature group, select ARM64 and IL2CPP, and build to the device. Use floor tracking and a configured guardian boundary.
+5. For PC VR, connect your headset, start its OpenXR runtime, open Forest, and press Play. For Quest, switch to Android in Build Settings, enable OpenXR for Android and the Meta Quest feature group, select ARM64 and IL2CPP, and build to the device. Use floor tracking and a configured guardian boundary.
 
 ## Build a Quest APK
 
-After completing OpenXR setup above, switch to **Android** in **File → Build Profiles**. Enable **Initialize XR on Startup**, **Meta Quest Support**, and **Oculus Touch Controller Profile** for Android, then resolve OpenXR Project Validation issues.
+After completing OpenXR setup above, switch to **Android** in **File → Build Settings**. Enable **Initialize XR on Startup**, **Meta Quest Support**, and **Oculus Touch Controller Profile** for Android, then resolve OpenXR Project Validation issues.
 
 Choose **Primal Monke → Build Quest APK**. The command checks required XR settings and creates `Builds/Android/PrimalMonke.apk` using ARM64, IL2CPP, and debug signing for local testing. It updates Android player settings and leaves release signing out of this prototype workflow. This APK requires a Quest headset; it is not a phone game.
 

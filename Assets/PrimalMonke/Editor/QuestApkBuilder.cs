@@ -20,7 +20,7 @@ namespace PrimalMonke.Editor
             if (!BuildPipeline.IsBuildTargetSupported(BuildTargetGroup.Android, BuildTarget.Android))
                 throw new BuildFailedException("Install Android Build Support, SDK/NDK, and OpenJDK using Unity Hub.");
             if (EditorUserBuildSettings.activeBuildTarget != BuildTarget.Android)
-                throw new BuildFailedException("Switch to Android in File > Build Profiles, then run Build Quest APK again.");
+                throw new BuildFailedException("Switch to Android in File > Build Settings, then run Build Quest APK again.");
 
             var xr = XRGeneralSettingsPerBuildTarget.XRGeneralSettingsForBuildTarget(BuildTargetGroup.Android);
             bool hasOpenXR = false;
