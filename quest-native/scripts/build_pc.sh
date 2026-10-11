@@ -22,9 +22,76 @@ esac
 mkdir -p "$pm_output_dir"
 "$pm_godot_bin" --headless --xr-mode off --path "$pm_project_dir" \
   --export-release Windows "$pm_output_dir/PrimalMonke.exe"
+
+pm_write_launcher() {
+  local pm_launcher="$1"
+  local pm_xr_mode="$2"
+  local pm_play_mode="$3"
+  printf '%s\r\n' \
+    '@echo off' \
+    'setlocal' \
+    'if not exist "%~dp0PrimalMonke.exe" (' \
+    '  echo PrimalMonke.exe is missing. Extract the complete ZIP into one folder first.' \
+    '  pause' \
+    '  exit /b 1' \
+    ')' \
+    "start \"\" /D \"%~dp0\" \"%~dp0PrimalMonke.exe\" --xr-mode $pm_xr_mode -- --play-mode=$pm_play_mode" \
+    'if errorlevel 1 (' \
+    '  echo Primal Monke could not start.' \
+    '  pause' \
+    '  exit /b 1' \
+    ')' \
+    'exit /b 0' > "$pm_output_dir/$pm_launcher"
+}
+
+pm_write_launcher Play-Desktop.bat off desktop
+pm_write_launcher Play-PCVR.bat on pcvr
+cat > "$pm_output_dir/README.txt" <<'README'
+Primal Monke 0.3.0 for Windows
+
+Extract every file from the ZIP into the same folder before playing.
+
+Play-Desktop.bat: keyboard and mouse play, without starting VR.
+Play-PCVR.bat: tracked headset and controller play using OpenXR.
+Connect your headset and start its active OpenXR runtime first. For a Quest
+headset, use Quest Link/Air Link or another configured PC OpenXR connection.
+
+Desktop controls: WASD move, hold right mouse to look, Space jump, E tag,
+R restart your round, and Tab open/close the multiplayer menu.
+
+The game automatically signs in a saved device account with PlayFab at startup.
+Account opens with F3 on desktop or left X in VR and shows your public PlayFab
+ID, sign-in status, and access role. You can play with that device account.
+
+To register, enter a username (3-20 characters), email, and password (6-100
+characters), then choose Register. Registering while signed into a device
+account adds credentials to that same account and preserves its PlayFab ID.
+Sign out before registering if you want a separate new account.
+
+To use your registered account on another PC or Quest, enter its email or
+username and password, then choose Sign in. Email takes precedence when both
+fields are filled; clear Email to sign in by username. Passwords are masked,
+cleared after submission or closing Account, and never saved by the game.
+The VR form includes a keyboard with lowercase, uppercase, and symbols.
+
+Developer tools are available only to accounts approved by the game's owner.
+After your PlayFab ID is added to the server's developer list, choose Refresh
+access in Account. F2 on desktop or left Y in VR opens the developer menu.
+Use the same registered account on PC and Quest to keep the same approved ID.
+
+To play with standalone Quest, install the matching 0.3.0 native APK. Connect
+both devices to the same local network, choose Host on one device, and enter
+that host's IPv4 address on the other. Networking uses UDP port 7777.
+
+Full instructions and source:
+https://github.com/Grec26/Primal_Monke_Archives/tree/main/pc
+Developer access setup:
+https://github.com/Grec26/Primal_Monke_Archives/tree/main/quest-native#developer-access
+README
+
 (
   cd "$pm_output_dir"
-  zip -q -9 PrimalMonke-Windows.zip PrimalMonke.exe
+  zip -q -9 -FS PrimalMonke-Windows.zip PrimalMonke.exe Play-Desktop.bat Play-PCVR.bat README.txt
 )
 printf 'Windows executable: %s\nDownload ZIP: %s\n' \
   "$pm_output_dir/PrimalMonke.exe" "$pm_output_dir/PrimalMonke-Windows.zip"

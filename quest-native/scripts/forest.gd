@@ -4,8 +4,36 @@ const PlayerScript = preload("res://scripts/arm_player.gd")
 const BotScript = preload("res://scripts/monkey_bot.gd")
 const SessionScript = preload("res://scripts/crossplay.gd")
 const LobbyScript = preload("res://scripts/lobby_menu.gd")
+const ModeScript = preload("res://scripts/play_mode.gd")
+const AccountScript = preload("res://scripts/playfab_account.gd")
+const AccountMenuScript = preload("res://scripts/account_menu.gd")
 var session: SessionScript
 var lobby: LobbyScript
+var account: AccountScript
+var account_menu: AccountMenuScript
+var dev_menu: Node3D
+var requested_play_mode := "auto"
+var play_mode_notice := ""
+var developer_bots_frozen := false
+var diagnostics_enabled := false
+var diagnostics_board: Label3D
+var _developer_message := "Developer access verified"
+var account_status: String:
+	get: return account.status if account != null else "Not signed in"
+var account_id: String:
+	get: return account.account_id if account != null else ""
+var account_busy: bool:
+	get: return account != null and account.busy
+var account_configured: bool:
+	get: return account != null and account.configured()
+var account_signed_in: bool:
+	get: return account != null and account.is_signed_in()
+var account_is_developer: bool:
+	get: return account != null and account.is_developer()
+var account_has_credentials: bool:
+	get: return account != null and account.has_credentials
+var developer_status: String:
+	get: return _developer_message if account_is_developer else "Developer access required"
 var network_status: String:
 	get: return session.status if session != null else "Solo"
 var session_address: String:
@@ -64,8 +92,9 @@ func sphere(parent: Node3D, location: Vector3, size: Vector3, material: Standard
 	return visual
 
 func _ready() -> void:
+	requested_play_mode = ModeScript.requested(OS.get_cmdline_user_args(), OS.has_feature("android"))
 	xr = XRServer.find_interface("OpenXR")
-	if DisplayServer.get_name() != "headless" and xr != null:
+	if requested_play_mode != "desktop" and DisplayServer.get_name() != "headless" and xr != null:
 		if xr.is_initialized() or xr.initialize():
 			get_viewport().use_xr = true
 			DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
@@ -74,6 +103,8 @@ func _ready() -> void:
 				xr.session_focussed.connect(func(): xr_focused = true)
 				xr.session_visible.connect(func(): xr_focused = false)
 				xr.session_stopping.connect(func(): xr_focused = false)
+	if requested_play_mode == "pcvr" and not get_viewport().use_xr:
+		play_mode_notice = "PC VR unavailable. Start your headset's OpenXR runtime, then retry PC VR."
 	var world := WorldEnvironment.new()
 	var environment := Environment.new()
 	environment.background_mode = Environment.BG_COLOR
@@ -131,6 +162,105 @@ func _ready() -> void:
 	lobby.name = "LobbyMenu"
 	lobby.game = self
 	add_child(lobby)
+	account = AccountScript.new()
+	account.name = "PlayFabAccount"
+	add_child(account)
+	account_menu = AccountMenuScript.new()
+	account_menu.name = "AccountMenu"
+	account_menu.game = self
+	add_child(account_menu)
+	account.state_changed.connect(_account_changed)
+	diagnostics_board = Label3D.new()
+	diagnostics_board.position = Vector3(0, -0.22, -0.7)
+	diagnostics_board.font_size = 22
+	diagnostics_board.pixel_size = 0.001
+	diagnostics_board.no_depth_test = true
+	diagnostics_board.visible = false
+	player.head.add_child(diagnostics_board)
+	# Headless tests never register real players or make external account requests.
+	if DisplayServer.get_name() != "headless": account.call_deferred("login_device")
+
+func can_switch_play_mode(mode: String) -> bool:
+	if OS.has_feature("android") or DisplayServer.get_name() == "headless": return false
+	if mode not in ["desktop", "pcvr"] or player == null or network_mode != "offline": return false
+	return (mode == "pcvr" and not player.xr_running) or (mode == "desktop" and player.xr_running)
+
+func switch_play_mode(mode: String) -> void:
+	if not can_switch_play_mode(mode):
+		play_mode_notice = "Leave the multiplayer session before switching play modes."
+		return
+	var editor_path := ProjectSettings.globalize_path("res://") if OS.has_feature("editor") else ""
+	var process_id := OS.create_process(OS.get_executable_path(), ModeScript.launch_arguments(mode, editor_path))
+	if process_id <= 0:
+		play_mode_notice = "Could not launch %s. Try its launcher in the Windows download." % mode
+		return
+	get_tree().quit()
+
+func open_account_menu() -> void:
+	account_menu.set_open(true)
+
+func on_account_menu_open() -> void:
+	lobby.set_open(false)
+	if is_instance_valid(dev_menu): dev_menu.set_open(false)
+
+func on_developer_menu_open() -> void:
+	lobby.set_open(false)
+	account_menu.set_open(false)
+
+func account_login_device() -> void:
+	account.login_device()
+
+func account_login_credentials(identifier: String, password: String) -> void:
+	account.login_credentials(identifier, password)
+
+func account_register(username: String, email: String, password: String) -> void:
+	account.register(username, email, password)
+
+func account_refresh() -> void:
+	account.refresh_permissions()
+
+func account_logout() -> void:
+	account.sign_out()
+
+func _account_changed() -> void:
+	if account_is_developer:
+		if not is_instance_valid(dev_menu):
+			var script := load("res://dev/developer_menu.gd") as Script
+			if script == null: return
+			dev_menu = script.new()
+			dev_menu.name = "DeveloperMenu"
+			dev_menu.game = self
+			add_child(dev_menu)
+	else:
+		if is_instance_valid(dev_menu):
+			dev_menu.set_open(false)
+			dev_menu.queue_free()
+			dev_menu = null
+		developer_bots_frozen = false
+		diagnostics_enabled = false
+
+func developer_action_allowed(action: String) -> bool:
+	if not account_is_developer: return false
+	if action in ["respawn", "diagnostics"]: return true
+	if action not in ["restart", "add_time", "freeze_bots", "tag_all"]: return false
+	return session != null and not session.is_client()
+
+func developer_action(action: String) -> void:
+	# Menu buttons, shortcuts, and direct calls all pass the same role/authority gate.
+	if not developer_action_allowed(action): return
+	match action:
+		"restart": restart()
+		"add_time":
+			if score < bots.size():
+				remaining = minf(300, remaining + 30)
+				finished = false
+		"freeze_bots": developer_bots_frozen = not developer_bots_frozen
+		"tag_all":
+			for bot in bots: tag_bot(bot)
+		"respawn": player.reset_player()
+		"diagnostics": diagnostics_enabled = not diagnostics_enabled
+	_developer_message = "Bots frozen" if developer_bots_frozen else "Developer access verified"
+	if session.is_host(): session._send_snapshot()
 
 func host_session() -> void:
 	session.host()
@@ -220,6 +350,8 @@ func restart() -> void:
 	player.reset_player()
 	for bot in bots: bot.reset_bot()
 	last_board = ""
+	developer_bots_frozen = false
+	_developer_message = "Developer access verified"
 	if session != null: session.round_restarted()
 
 func tag_bot(bot: BotScript) -> void:
@@ -231,7 +363,12 @@ func tag_bot(bot: BotScript) -> void:
 
 func _physics_process(delta: float) -> void:
 	if player == null: return
-	player.input_allowed = xr_focused and (lobby == null or not lobby.is_open)
+	var menu_open: bool = (lobby != null and lobby.is_open) or (account_menu != null and account_menu.is_open) or (is_instance_valid(dev_menu) and dev_menu.is_open)
+	# Opening the public lobby closes any other overlay, so only one menu owns input.
+	if lobby != null and lobby.is_open:
+		if account_menu != null and account_menu.is_open: account_menu.set_open(false)
+		if is_instance_valid(dev_menu) and dev_menu.is_open: dev_menu.set_open(false)
+	player.input_allowed = xr_focused and not menu_open
 	var pressed: bool = (xr_focused and player.hands[1].is_button_pressed("ax_button")) if player.xr_running else Input.is_physical_key_pressed(KEY_R)
 	if pressed and not restart_held and player.input_allowed: request_restart()
 	restart_held = pressed
@@ -239,7 +376,7 @@ func _physics_process(delta: float) -> void:
 	var active := not poses.is_empty()
 	var authority := session == null or not session.is_client()
 	for bot in bots:
-		bot.active = authority and active and not finished
+		bot.active = authority and active and not finished and not developer_bots_frozen
 		bot.use_network_target = session != null and session.is_host()
 		if bot.use_network_target:
 			var closest := INF
@@ -264,8 +401,16 @@ func _physics_process(delta: float) -> void:
 	status += "\nRight B / Tab: multiplayer menu · " + network_mode
 	if session != null and session.is_client(): status += " · Host restarts"
 	else: status += " · Right A / R: restart"
+	if not play_mode_notice.is_empty(): status += "\n" + play_mode_notice
+	if account_is_developer: status += "\nDeveloper tools: F2 / left Y · Account: F3 / left X"
+	var diagnostics := "%s FPS · %s · Tracking %s\nPosition %s\nRound %s / 5 · %ss" % [Engine.get_frames_per_second(), network_mode, player.tracked, player.global_position.snapped(Vector3.ONE * 0.1), score, ceili(remaining)]
+	if diagnostics_enabled and not account_is_developer: diagnostics_enabled = false
+	if diagnostics_board != null:
+		diagnostics_board.visible = diagnostics_enabled and player.xr_running
+		diagnostics_board.text = diagnostics
 	var text := "PRIMAL MONKE\n%s\n%s / 5 TAGGED     %ss\n%s" % [title, score, ceili(remaining), status]
 	if text != last_board:
 		board.text = text
 		desktop_label.text = text
 		last_board = text
+	desktop_label.text = text + ("\n" + diagnostics if diagnostics_enabled else "")

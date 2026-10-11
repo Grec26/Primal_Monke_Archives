@@ -4,7 +4,7 @@ extends Node
 const PORT := 7777
 const MAX_PLAYERS := 8
 const PROTOCOL := 1
-const GAME_VERSION := "0.2.0"
+const GAME_VERSION := "0.3.0"
 const STALE_MS := 2000
 const AvatarScript = preload("res://scripts/remote_monkey.gd")
 var game: Node3D
@@ -92,7 +92,7 @@ func _hello(protocol: int, version: String) -> void:
 	if not is_host(): return
 	var sender := multiplayer.get_remote_sender_id()
 	if protocol != PROTOCOL or version != GAME_VERSION:
-		_rejected.rpc_id(sender, "Version mismatch — install matching PC and Quest 0.2.0 builds")
+		_rejected.rpc_id(sender, "Version mismatch — install matching PC and Quest 0.3.0 builds")
 		return
 	members[sender] = {"active": false, "seen": Time.get_ticks_msec()}
 	_welcome.rpc_id(sender, make_snapshot())

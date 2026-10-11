@@ -4,11 +4,15 @@ extends Node3D
 # and round state; this node only displays the lobby and forwards user actions.
 var game: Node3D
 var is_open := false
+var toggle_key := KEY_TAB
+var toggle_hand := 1
+var toggle_button := "by_button"
 
-const PANEL_SIZE := Vector2(1.36, 1.54)
+const PANEL_SIZE := Vector2(1.36, 1.82)
 const NORMAL_COLOR := Color("24483e")
 const TEXT_COLOR := Color("ecf4df")
 
+var panel_size := PANEL_SIZE
 var _address := "127.0.0.1"
 var _status_text := "Offline. Host a game or enter the host's IPv4 address."
 var _state_snapshot := ""
@@ -27,6 +31,7 @@ var _pointer: MeshInstance3D
 var _hovered := -1
 var _toggle_held := false
 var _trigger_held := false
+var _mode_button_index := -1
 
 func _ready() -> void:
 	_create_desktop_menu()
@@ -55,16 +60,19 @@ func _is_xr() -> bool:
 	return player != null and bool(player.get("xr_running"))
 
 func _right_hand() -> XRController3D:
+	return _controller(1)
+
+func _controller(index: int) -> XRController3D:
 	var player := _player()
 	if player == null:
 		return null
 	var hands: Variant = player.get("hands")
-	if hands is Array and hands.size() > 1:
-		return hands[1] as XRController3D
+	if hands is Array and index >= 0 and hands.size() > index:
+		return hands[index] as XRController3D
 	return null
 
 func _input(event: InputEvent) -> void:
-	if event is InputEventKey and (event.physical_keycode == KEY_TAB or event.keycode == KEY_TAB):
+	if event is InputEventKey and (event.physical_keycode == toggle_key or event.keycode == toggle_key):
 		if event.pressed and not event.echo:
 			toggle()
 		get_viewport().set_input_as_handled()
@@ -90,9 +98,10 @@ func set_open(value: bool) -> void:
 			_place_world_panel()
 		else:
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-			_address_edit.grab_focus()
-			_address_edit.select_all()
-	else:
+			if _address_edit != null:
+				_address_edit.grab_focus()
+				_address_edit.select_all()
+	elif _address_edit != null:
 		_address_edit.release_focus()
 	var right := _right_hand()
 	_trigger_held = right != null and _trigger_pressed(right)
@@ -107,10 +116,13 @@ func refresh_status() -> void:
 	if not is_instance_valid(game):
 		return
 	var status := _game_text("network_status", _status_text)
+	var mode_notice := _game_text("play_mode_notice", "")
+	if not mode_notice.is_empty():
+		status += "\n" + mode_notice
 	var address := _game_text("session_address", "Not available")
 	var mode := _game_text("network_mode", "offline")
 	var host := game.has_method("is_session_host") and bool(game.call("is_session_host"))
-	var snapshot := "%s|%s|%s|%s" % [status, address, mode, host]
+	var snapshot := "%s|%s|%s|%s|%s|%s|%s" % [status, address, mode, host, _is_xr(), _action_enabled("pcvr"), _action_enabled("desktop")]
 	if snapshot != _state_snapshot:
 		_state_snapshot = snapshot
 		_status_text = status
@@ -127,6 +139,10 @@ func _game_text(property_name: String, fallback: String) -> String:
 	return fallback if value == null or str(value).is_empty() else str(value)
 
 func _action_enabled(action: String) -> bool:
+	if action in ["pcvr", "desktop"]:
+		return is_instance_valid(game) and game.has_method("can_switch_play_mode") and bool(game.call("can_switch_play_mode", action))
+	if action == "account":
+		return is_instance_valid(game) and game.has_method("open_account_menu")
 	var mode := _game_text("network_mode", "offline")
 	match action:
 		"host", "join":
@@ -154,6 +170,8 @@ func _dispatch(action: String) -> void:
 			"join": game.call("join_session", _address.strip_edges())
 			"leave": game.call("leave_session")
 			"restart": game.call("request_restart")
+			"pcvr", "desktop": game.call("switch_play_mode", action)
+			"account": game.call("open_account_menu")
 		refresh_status()
 
 func _set_address(value: String) -> void:
@@ -176,6 +194,11 @@ func _update_labels() -> void:
 		_world_status.text = _status_text
 		_world_address.text = local_address
 		_world_ip.text = _address if not _address.is_empty() else "Enter host IP"
+	if _mode_button_index >= 0:
+		var mode_button := _world_buttons[_mode_button_index]
+		mode_button["action"] = "desktop" if _is_xr() else "pcvr"
+		var label: Label3D = mode_button["label"]
+		label.text = "DESKTOP" if _is_xr() else "PC VR"
 
 func _update_visibility() -> void:
 	var xr := _is_xr()
@@ -185,19 +208,33 @@ func _update_visibility() -> void:
 
 func _process(_delta: float) -> void:
 	refresh_status()
+	if is_open and _world_panel.visible != _is_xr():
+		if _is_xr():
+			_place_world_panel()
+		else:
+			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		_update_visibility()
 	if not _is_xr():
 		return
-	var right := _right_hand()
-	if right == null or not right.get_has_tracking_data() or game.get("xr_focused") == false:
+	if game.get("xr_focused") == false:
 		# Require a release after tracking/focus returns before accepting a click.
 		_toggle_held = true
 		_trigger_held = true
 		_pointer.visible = false
 		return
-	var toggle_pressed := right.is_button_pressed("by_button")
-	if toggle_pressed and not _toggle_held:
-		toggle()
-	_toggle_held = toggle_pressed
+	var toggle_controller := _controller(toggle_hand)
+	if toggle_controller != null and toggle_controller.get_has_tracking_data():
+		var toggle_pressed := toggle_controller.is_button_pressed(toggle_button)
+		if toggle_pressed and not _toggle_held:
+			toggle()
+		_toggle_held = toggle_pressed
+	else:
+		_toggle_held = true
+	var right := _right_hand()
+	if right == null or not right.get_has_tracking_data():
+		_trigger_held = true
+		_pointer.visible = false
+		return
 	var trigger := _trigger_pressed(right)
 	if is_open:
 		var ray := _aim if is_instance_valid(_aim) and _aim.get_has_tracking_data() else right
@@ -241,7 +278,7 @@ func _intersect_panel(ray_origin: Vector3, ray_direction: Vector3) -> Dictionary
 		return {}
 	var local_hit := local_origin + local_direction * distance
 	var point := Vector2(local_hit.x, local_hit.y)
-	if not Rect2(-PANEL_SIZE * 0.5, PANEL_SIZE).has_point(point):
+	if not Rect2(-panel_size * 0.5, panel_size).has_point(point):
 		return {}
 	var button := -1
 	for index in range(_world_buttons.size()):
@@ -314,6 +351,13 @@ func _create_desktop_menu() -> void:
 	content.add_child(second_row)
 	_desktop_button(second_row, "Restart round", "restart")
 	_desktop_button(second_row, "Close", "close")
+	var mode_row := HBoxContainer.new()
+	mode_row.add_theme_constant_override("separation", 8)
+	content.add_child(mode_row)
+	if OS.get_name() != "Android":
+		_desktop_button(mode_row, "PC VR", "pcvr")
+		_desktop_button(mode_row, "Desktop", "desktop")
+	_desktop_button(mode_row, "Account", "account")
 	var hint := Label.new()
 	hint.text = "Tab: open / close · Headset: right B, aim + trigger"
 	content.add_child(hint)
@@ -373,7 +417,7 @@ func _create_world_menu() -> void:
 	_world_panel = Node3D.new()
 	_world_panel.name = "WorldLobby"
 	add_child(_world_panel)
-	_world_box(Vector2.ZERO, PANEL_SIZE, -0.035, Color("102a22"))
+	_world_box(Vector2.ZERO, panel_size, -0.035, Color("102a22"))
 	_world_label("LOCAL MULTIPLAYER", Vector2(0, 0.65), 48)
 	_world_label("Native Quest + desktop · same Wi-Fi", Vector2(0, 0.565), 25)
 	_world_address = _world_label("", Vector2(0, 0.48), 27)
@@ -394,8 +438,12 @@ func _create_world_menu() -> void:
 		_world_button(keys[index], action, Vector2(-0.45 + column * 0.3, -0.055 - row * 0.12), Vector2(0.255, 0.1))
 	_world_button("CLEAR IP", "clear", Vector2(-0.305, -0.42), Vector2(0.54, 0.1))
 	_world_button("RESTART", "restart", Vector2(0.305, -0.42), Vector2(0.54, 0.1))
-	_world_button("CLOSE", "close", Vector2(0, -0.55), Vector2(1.15, 0.1))
-	_world_label("Right B closes · Aim + trigger to select", Vector2(0, -0.67), 24)
+	_world_button("CLOSE", "close", Vector2(-0.305, -0.55), Vector2(0.54, 0.1))
+	_world_button("ACCOUNT", "account", Vector2(0.305, -0.55), Vector2(0.54, 0.1))
+	if OS.get_name() != "Android":
+		_world_button("DESKTOP" if _is_xr() else "PC VR", "desktop" if _is_xr() else "pcvr", Vector2(0, -0.69), Vector2(1.15, 0.1))
+		_mode_button_index = _world_buttons.size() - 1
+	_world_label("Right B closes · Aim + trigger to select", Vector2(0, -0.815), 24)
 	_pointer = MeshInstance3D.new()
 	var dot := SphereMesh.new()
 	dot.radius = 0.009

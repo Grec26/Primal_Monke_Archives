@@ -1,21 +1,29 @@
 {
   "file": "PrimalMonke-Windows.zip",
-  "bytes": 35925292,
-  "sha256": "61603c010910ca6da0de5184dda534cbc45adb7f9b6bcabc1efd9692ca74f2d0",
+  "bytes": 35961925,
+  "sha256": "80f4343fa40b0fd4e4c564bfbac389f1cf7ebd3522e030d8f4030d151c23621b",
   "executable": {
     "file": "PrimalMonke.exe",
-    "bytes": 104642688,
-    "sha256": "9f3073a6c238d9cb7b227b7f15ed1f352c42de90315321c23ae0148a95dcacfc",
+    "bytes": 104677464,
+    "sha256": "324cd9665937c4945db226e638f8cd8b4aa1c43c845bf83b20cd9e0b322ddada",
     "format": "PE32+",
     "architecture": "x86_64",
     "game_data_embedded": true,
     "codesigned": false
   },
-  "version": "0.2.0",
+  "version": "0.3.0",
   "engine": "Godot 4.6.3",
   "archive_integrity_verified": true,
-  "embedded_pack_resources": 22,
+  "archive_files": [
+    "PrimalMonke.exe",
+    "Play-Desktop.bat",
+    "Play-PCVR.bat",
+    "README.txt"
+  ],
+  "desktop_and_pcvr_launchers_verified": true,
+  "embedded_pack_resources": 30,
   "embedded_pack_payload_md5_verified": true,
+  "embedded_pack_account_developer_and_play_mode_resources_verified": true,
   "embedded_pack_linux_headless_startup_passed": true,
   "native_smoke_checks_passed": 16,
   "crossplay_integration": {
@@ -24,6 +32,19 @@
     "mixed_desktop_vr_poses": true,
     "transport": "ENet UDP"
   },
+  "playfab_title_id": "1A7D9B",
+  "developer_title_data_key": "PrimalMonkeDeveloperIds",
+  "live_signin_verified": false,
   "windows_playtested": false,
-  "headset_playtested": false
+  "headset_playtested": false,
+  "embedded_pack_bytes": 145996,
+  "embedded_pack_registration_and_credential_login_resources_verified": true,
+  "account_registration_access_and_play_mode_checks_passed": 134,
+  "account_ui_mock_checks_passed": 2118,
+  "printable_ascii_keyboard_characters_verified": 95,
+  "account_registration_supported": true,
+  "guest_registration_preserves_playfab_id": true,
+  "cross_device_credentials_supported": true,
+  "passwords_saved_by_game": false,
+  "live_registration_verified": false
 }

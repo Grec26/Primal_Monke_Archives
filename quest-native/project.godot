@@ -2,6 +2,7 @@ config_version=5
 
 [application]
 config/name="Primal Monke"
+config/version="0.3.0"
 run/main_scene="res://forest.tscn"
 config/features=PackedStringArray("4.6", "GL Compatibility")
 config/icon="res://icon.svg"
@@ -22,3 +23,6 @@ anti_aliasing/quality/msaa_3d=1
 openxr/enabled=true
 openxr/default_action_map="res://openxr_action_map.tres"
 shaders/enabled=true
+
+[primal_monke]
+playfab/title_id="1A7D9B"

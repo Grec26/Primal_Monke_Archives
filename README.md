@@ -1,6 +1,8 @@
 # Primal Monke — Forest Chase
 
-**PC + Quest crossplay (0.2.0):** [Windows download — ZIP containing PrimalMonke.exe](https://github.com/Grec26/Primal_Monke_Archives/raw/refs/heads/main/pc/PrimalMonke-Windows.zip) · [Quest APK](https://github.com/Grec26/Primal_Monke_Archives/raw/refs/heads/main/apk/PrimalMonke-Quest.apk). These matching native Godot builds share a co-op forest round with up to eight players. [Crossplay instructions](quest-native/README.md#crossplay).
+**PC + Quest crossplay (0.3.0):** [Windows download](https://github.com/Grec26/Primal_Monke_Archives/raw/refs/heads/main/pc/PrimalMonke-Windows.zip) · [Quest APK](https://github.com/Grec26/Primal_Monke_Archives/raw/refs/heads/main/apk/PrimalMonke-Quest.apk). Extract the Windows ZIP and use **Play-PCVR.bat** for OpenXR headset play or **Play-Desktop.bat** for keyboard/mouse. These matching native Godot builds share a co-op forest round with up to eight players. [Crossplay instructions](quest-native/README.md#crossplay).
+
+**Accounts and developer tools:** PlayFab title **1A7D9B** supports automatic device accounts, username/email registration, and account sign-in on PC and Quest. Open **Account / F3 / left X**. Only IDs in the title's `PrimalMonkeDeveloperIds` list can open the dev menu with **F2 / left Y**. [Account instructions](quest-native/README.md#accounts) · [Developer setup](quest-native/README.md#developer-access).
 
 An original tag prototype inspired by arm-driven locomotion. Includes a climbable forest, five fleeing AI monkeys, and a 90-second round. No Gorilla Tag assets or code are used. The Unity project below and the WebXR version are single-player; crossplay is implemented in the separate [`quest-native/`](quest-native/README.md) port used by the downloadable PC and Quest builds.
 
