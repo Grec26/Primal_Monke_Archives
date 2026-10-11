@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#102a22"><title>Primal Monke • Forest Chase</title>
+</head>
+<body>
+  <canvas id="world" aria-label="Interactive 3D forest tag game"></canvas>
+  <header><a class="brand" href="./"><span class="mark">PM</span><span>PRIMAL MONKE<small>FOREST CHASE / WEBXR</small></span></a><span class="badge">AI EDITION · 01</span></header>
+  <main id="welcome" class="panel">
+    <div class="eyebrow"><span></span> YOUR NEXT CHASE STARTS HERE</div>
+    <h1>Go wild.<br><em>Catch the crew.</em></h1>
+    <p>Five monkeys. One forest. Ninety seconds.<br>Push, climb, and leap your way to the perfect tag.</p>
+    <div class="actions"><button id="play">Play on screen <span>↗</span></button><button id="vr" class="secondary" disabled>Checking VR…</button></div>
+    <p id="xr-status" class="status" role="status"></p>
+    <div class="instructions"><div><b>ON SCREEN</b>WASD / arrows to move<br>Drag to look · Space to jump<br>Click near a monkey to tag</div><div><b>IN YOUR HEADSET</b>Push surfaces with your hands<br>Touch a monkey to tag<br>Right A button to restart</div></div>
+  </main>
+  <aside id="hud" hidden><div><small>FOREST CHASE</small><strong id="score">0 / 5</strong><span>monkeys tagged</span></div><div class="timer"><small>TIME LEFT</small><strong id="time">90</strong><span>seconds</span></div><button id="restart">Restart ↻</button><button id="menu">Menu</button></aside>
+  <div id="message" role="status" hidden></div>
+  <div id="touch" hidden><div><button data-key="ArrowUp" aria-label="Move forward">↑</button><div><button data-key="ArrowLeft" aria-label="Move left">←</button><button data-key="ArrowDown" aria-label="Move back">↓</button><button data-key="ArrowRight" aria-label="Move right">→</button></div></div><div><button id="touch-jump">Jump</button><button id="touch-tag">Tag</button></div></div>
+  <footer><span>AN ORIGINAL FOREST PLAYGROUND</span><span>Single player · No download required</span></footer>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

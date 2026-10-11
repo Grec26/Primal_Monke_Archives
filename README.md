@@ -2,6 +2,8 @@
 
 An original single-player Unity VR tag prototype inspired by arm-driven locomotion. Includes a climbable forest, five fleeing AI monkeys, and a 90-second round. No Gorilla Tag assets or code are used. Multiplayer is not implemented.
 
+A separate **WebXR browser version** is available in [`web/`](web/README.md). It supports headset controllers and an on-screen mode without modifying the Unity project.
+
 ## Open and play
 
 1. Install **Unity 2021.3.21f1** using Unity Hub. For standalone Quest builds, include Android Build Support, SDK/NDK tools, and OpenJDK.

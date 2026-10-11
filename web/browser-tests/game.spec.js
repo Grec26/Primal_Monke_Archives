@@ -1,0 +1,34 @@
+import { test, expect } from '@playwright/test';
+test('renders forest, starts a timed round, moves, restarts and returns to menu', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', e => errors.push(e.message));
+  await page.setViewportSize({ width: 1365, height: 900 });
+  await page.goto('/');
+  await expect(page.getByRole('heading')).toContainText('Catch the crew.');
+  await expect(page.locator('#vr')).toHaveText('VR unavailable');
+  await page.screenshot({ path: '/tmp/primal-monke-web-welcome.png' });
+  await page.getByRole('button', { name: 'Play on screen' }).click();
+  await expect(page.locator('#hud')).toBeVisible();
+  await expect.poll(async () => Number(await page.locator('#time').textContent())).toBeLessThan(90);
+  const before = await page.locator('#world').screenshot();
+  await page.keyboard.down('KeyW');
+  await page.waitForTimeout(700);
+  await page.keyboard.up('KeyW');
+  const after = await page.locator('#world').screenshot();
+  expect(before.equals(after)).toBe(false);
+  await page.getByRole('button', {name:'Restart ↻'}).click();
+  await expect(page.locator('#score')).toHaveText('0 / 5');
+  await expect(page.locator('#time')).toHaveText('90');
+  await page.getByRole('button', { name: 'Menu', exact: true }).click();
+  await expect(page.locator('#welcome')).toBeVisible();
+  await expect(page.locator('#hud')).toBeHidden();
+  expect(errors).toEqual([]);
+});
+test('touch controls fit a small screen and start a game', async ({ page }) => {
+  await page.setViewportSize({width:390,height:844});
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  await page.getByRole('button',{name:'Play on screen'}).click();
+  await expect(page.locator('#hud')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
