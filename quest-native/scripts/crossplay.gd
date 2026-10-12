@@ -4,7 +4,11 @@ extends Node
 const PORT := 7777
 const MAX_PLAYERS := 8
 const PROTOCOL := 2
-const GAME_VERSION := "0.7.0"
+const GAME_VERSION := "0.7.1"
+const MAX_DESKTOP_HAND_DISTANCE := 1.6
+# Virtual monkey hands reach the ground while standing; allow 5 cm of
+# physics/contact tolerance beyond the player's bounded 2.3 m reach.
+const MAX_VR_HAND_DISTANCE := 2.35
 const STALE_MS := 2000
 const TAG_COOLDOWN_MS := 1250
 const PROFILE_INTERVAL_MS := 1000
@@ -193,7 +197,7 @@ func _hello(protocol: int, version: String) -> void:
 	var sender := multiplayer.get_remote_sender_id()
 	if sender <= 1: return
 	if protocol != PROTOCOL or version != GAME_VERSION:
-		_rejected.rpc_id(sender, "Version mismatch — install matching PC and Quest 0.7.0 builds")
+		_rejected.rpc_id(sender, "Version mismatch — install matching PC and Quest " + GAME_VERSION + " builds")
 		return
 	if members.has(sender):
 		# Repeating a handshake cannot reset a member's pose or match score.
@@ -325,8 +329,9 @@ func _usable_tag_pose(pose: Dictionary) -> bool:
 		if not pose.get(key) is Vector3 or not valid_vector(pose[key]): return false
 	var body: Vector3 = pose.body
 	var head: Vector3 = pose.head
+	var reach := MAX_VR_HAND_DISTANCE if pose.get("vr", false) else MAX_DESKTOP_HAND_DISTANCE
 	return absf(body.x) <= 18 and absf(body.z) <= 18 and body.y >= -12 and body.y <= 30 \
-		and head.distance_to(body) <= 3.5 and pose.left.distance_to(head) <= 1.6 and pose.right.distance_to(head) <= 1.6
+		and head.distance_to(body) <= 3.5 and pose.left.distance_to(head) <= reach and pose.right.distance_to(head) <= reach
 
 func _distance_to_body(point: Vector3, head: Vector3) -> float:
 	var top := head + Vector3.DOWN * 0.3
@@ -401,7 +406,8 @@ func _submit_pose(pose_round: int, body: Vector3, head: Vector3, rotation: Vecto
 	if not members.has(sender) or pose_round != round_id: return
 	if not valid_vector(body) or not valid_vector(head) or not valid_vector(rotation) or not valid_vector(left) or not valid_vector(right): return
 	if absf(body.x) > 18 or absf(body.z) > 18 or body.y < -12 or body.y > 30: return
-	if head.distance_to(body) > 3.5 or left.distance_to(head) > 1.6 or right.distance_to(head) > 1.6: return
+	var reach := MAX_VR_HAND_DISTANCE if vr else MAX_DESKTOP_HAND_DISTANCE
+	if head.distance_to(body) > 3.5 or left.distance_to(head) > reach or right.distance_to(head) > reach: return
 	members[sender] = {"body": body, "head": head, "rotation": rotation, "left": left, "right": right,
 		"vr": vr, "active": active, "tag": tag, "seen": Time.get_ticks_msec(), "peer_id": sender}
 

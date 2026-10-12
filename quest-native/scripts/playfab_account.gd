@@ -4,6 +4,10 @@ extends Node
 # A player-supplied PlayFab ID is never accepted as proof of identity.
 signal state_changed
 const DEVELOPER_KEY := "PrimalMonkeDeveloperIds"
+# Older titles used PMDID. The canonical key takes precedence whenever present,
+# including an empty list: a revoked developer must not regain access via an
+# outdated legacy list. Both values still come only from authenticated TitleData.
+const LEGACY_DEVELOPER_KEY := "PMDID"
 const LEASE_MS := 300000
 const REFRESH_MS := 240000
 const ErrorCodes = preload("res://scripts/error_codes.gd")
@@ -256,29 +260,42 @@ func refresh_permissions() -> void:
 	await _load_permissions(generation)
 
 func _load_permissions(generation: int, success_prefix := "") -> void:
-	var reply: Dictionary = await _request("GetTitleData", {"Keys": [DEVELOPER_KEY]}, _ticket)
+	var reply: Dictionary = await _request("GetTitleData", {"Keys": [DEVELOPER_KEY, LEGACY_DEVELOPER_KEY]}, _ticket)
 	if generation != _generation: return
 	_developer = false
 	_access_until_ms = 0
 	_next_refresh_ms = Time.get_ticks_msec() + REFRESH_MS
 	busy = false
+	error_code = ""
 	if reply.get("ok", false):
 		var envelope: Variant = reply.get("data", {})
 		var data: Variant = envelope.get("Data", {}) if envelope is Dictionary else {}
-		var raw: Variant = data.get(DEVELOPER_KEY, "") if data is Dictionary else ""
-		var ids: Variant = JSON.parse_string(raw) if raw is String and not raw.is_empty() else null
+		var key := DEVELOPER_KEY if data is Dictionary and data.has(DEVELOPER_KEY) else LEGACY_DEVELOPER_KEY
+		var raw: Variant = data.get(key) if data is Dictionary else null
+		# Use the quiet parser: an invalid title configuration must not echo its
+		# contents into logs. PlayFab TitleData values are JSON encoded strings.
+		var parser := JSON.new()
+		var parsed: bool = raw is String and not raw.is_empty() and parser.parse(raw) == OK
+		var ids: Variant = parser.data if parsed else null
 		# Malformed/missing lists grant nobody access. All entries must be ID strings.
-		if ids is Array and ids.all(func(value): return value is String and not value.strip_edges().is_empty()):
+		var valid_list: bool = ids is Array and ids.all(func(value): return value is String and not value.strip_edges().is_empty())
+		if valid_list:
 			for id in ids:
 				if id.strip_edges().to_upper() == account_id.to_upper():
 					_developer = true
 					_access_until_ms = Time.get_ticks_msec() + LEASE_MS
 					break
 		status = "Developer access verified" if _developer else "Signed in — player account (developer tools locked)"
+		if _developer and key == LEGACY_DEVELOPER_KEY:
+			status += " · PMDID"
+		elif not data is Dictionary or not data.has(key):
+			status = "Signed in — developer list missing (tools locked)"
+		elif not valid_list:
+			status = "Signed in — invalid developer list (tools locked)"
 	else:
-		status = "Signed in — access check unavailable (developer tools locked)"
+		error_code = ErrorCodes.code_for(reply)
+		status = "Signed in — access check unavailable (tools locked) [" + error_code + "]"
 	status = success_prefix + status
-	error_code = ""
 	state_changed.emit()
 
 func _fail(message: String, code := ErrorCodes.VERIFICATION_CODE) -> void:

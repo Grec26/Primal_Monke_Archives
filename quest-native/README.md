@@ -1,6 +1,6 @@
 # Primal Monke — native PC and Quest crossplay
 
-This **Godot 4.6.3 OpenXR game** builds a Windows x64 executable and an ARM64 Quest APK. Version **0.7.0** adds a local map creator with six save slots, undo/redo, object editing, and PC/VR playtesting. A clearer main menu, compact desktop HUD, updated loading screens, forest sky, and lightweight ground details improve the presentation. Up to eight PC and Quest players can share the original forest in Co-op chase or Player Tag. Accounts, profiles/PFPs, cosmetic levels, optional voice, tutorials, and saved settings remain available. Solo play and map creation work without an account connection.
+This **Godot 4.6.3 OpenXR game** builds a Windows x64 executable and an ARM64 Quest APK. Version **0.7.1** fixes developer access for titles using **PMDID** and improves standing VR arm reach. It includes a local map creator with six save slots, undo/redo, object editing, and PC/VR playtesting. A clearer main menu, compact desktop HUD, updated loading screens, forest sky, and lightweight ground details improve the presentation. Up to eight PC and Quest players can share the original forest in Co-op chase or Player Tag. Accounts, profiles/PFPs, cosmetic levels, optional voice, tutorials, and saved settings remain available. Solo play and map creation work without an account connection.
 
 The Unity **2021.3.21f1** and WebXR projects remain separate single-player versions. They cannot join these native multiplayer sessions. The forest, monkeys, icon, and audio are original; no Gorilla Tag assets or code are included.
 
@@ -46,9 +46,11 @@ The optional **Tutorial** includes movement, jump/hand-contact, and tag exercise
 
 Tracking/focus loss pauses that player's movement and tags. Recenter clears hand anchors and launch momentum. In multiplayer, the shared round continues while another player is active.
 
+In VR, lower the monkey hands to the ground and push them backward to move forward while standing upright. Lift your hands to release the push; plant them on a wall and pull downward to climb. Longer virtual arms provide ground reach while your headset view and controller menu rays continue to use the tracked poses.
+
 ## Crossplay
 
-1. Install matching **0.7.0** Windows and Quest builds and connect devices to the same local network. Guest Wi-Fi/client isolation can block connections.
+1. Install matching **0.7.1** Windows and Quest builds and connect devices to the same local network. Guest Wi-Fi/client isolation can block connections.
 2. Choose **Multiplayer lobby**. One player selects **Host** and shares the local IPv4 address shown in the lobby. On Windows, allow the game through the firewall for your private network.
 3. Other players enter that address and select **Join**. VR has a controller-operated IPv4 keypad. Public names, levels, and pictures appear in the room roster.
 4. While the room is waiting, the host selects **Co-op chase** or **Player Tag** with the mode button. Co-op shares the five AI monkeys, score, and countdown. Player Tag requires at least two players: one orange player is IT and transfers the role by tagging another player; a short cooldown prevents immediate tag-back.
@@ -138,9 +140,11 @@ Only verified IDs in the title-owned developer list can use developer tools. The
    ["YOUR_PC_PLAYFAB_ID", "YOUR_QUEST_PLAYFAB_ID"]
    ```
 
-   Replace these placeholders. A missing key, empty/malformed list, or unmatched ID grants nobody access. No developer IDs have been supplied or granted by this update.
+   Replace these placeholders. The older **PMDID** Title Data key also works with the same JSON array when **PrimalMonkeDeveloperIds** is absent. If both keys exist, **PrimalMonkeDeveloperIds** wins, including an empty or malformed value; an old PMDID list cannot undo a revocation. A missing key, empty/malformed list, or unmatched ID grants nobody access. No developer IDs have been supplied or granted by this update.
 3. Save the title data and choose **Refresh access** in Account. PlayFab can cache title data for approximately a minute; retry after that if necessary.
 4. A verified developer sees **Dev tools** in Main and Account. Select that button or use **F2 / left Y**; use the right aim ray/trigger for VR buttons. The button disappears when access expires, is revoked, or the player signs out.
+
+If access stays locked, **Account** distinguishes a missing developer list, invalid JSON array, and an unavailable access check. An unavailable check includes a safe error code. Verify the signed-in ID matches the saved list, use the exact case-sensitive key name, save Title Data, then choose **Refresh access**. Sign in to the same registered account on Quest and PC if you want one selected ID on both devices; anonymous device accounts have different IDs.
 
 The redesigned menu has **Round**, **Map**, and **Diagnostics** controls. Round tools include restart, +30 seconds (maximum 300), pause/resume, end round, bot freeze/resume, Slow/Normal/Fast bot pace, and tag all monkeys. Pause freezes the host timer, AI movement, and accepted tags while players can explore. Bot controls apply to Co-op chase. Map tools teleport your own player to safe hub/treehouse/cave/lookout locations, place up to eight local test markers, clear markers, and show collision outlines. Diagnostics show live performance, tracking, and position. Shared-round tools require a running round and an offline player or host. Developer clients can use local respawn, map testing, and diagnostics. Shared round tools require host authority. Every handler checks current permission and authority, including direct calls; there are no remote developer-action RPCs, shared passwords, or command-line unlocks.
 
@@ -181,6 +185,7 @@ godot --headless --xr-mode off --path quest-native --script tests/profile_check.
 godot --headless --xr-mode off --path quest-native --script tests/tutorial_sound_check.gd
 godot --headless --xr-mode off --path quest-native --script tests/voice_check.gd
 godot --headless --xr-mode off --path quest-native --script tests/tag_mode_check.gd
+godot --headless --xr-mode off --path quest-native --script tests/vr_movement_check.gd
 godot --headless --xr-mode off --path quest-native --script tests/map_document_check.gd
 godot --headless --xr-mode off --path quest-native --script tests/map_creator_check.gd
 godot --headless --xr-mode off --path quest-native --script tests/presentation_check.gd

@@ -4,6 +4,8 @@
 
 ## Start playing
 
+Version **0.7.1** fixes standing VR arm reach and supports the older **PMDID** developer list. After updating, sign in to your selected account and choose **Account → Refresh access**. Use matching 0.7.1 builds on PC and Quest for crossplay.
+
 The game includes updated menus, first-run registration, support error codes, picture uploads/PFPs, cosmetic levels, Player Tag, optional voice, tutorials, original audio, and a climbable treehouse. Startup loads the forest, then offers **Create account** or **Continue as guest** on first launch. Settings adds sound, mouse sensitivity, invert look, FOV, HUD, and fullscreen preferences. The forest adds cave/lookout routes, and the developer menu adds round and map testing controls. The main menu opens **Play solo**, **Multiplayer lobby**, **Account**, **Profile**, **Tutorial**, and **Voice**. **Resume game** continues an existing round without resetting it.
 
 Press **F1** for the main menu. **Tab** on desktop or right **B** in VR opens the main menu offline and the room menu online. In a waiting room, movement, tags, and the timer remain paused until the host chooses **Start match**.
@@ -39,7 +41,7 @@ Tutorial, Profile, and Voice are also available through the main menu in a heads
 
 ![Desktop map creator](screenshots/map-creator.png)
 
-Version **0.7.0** adds a local map creator, clearer menus, a new desktop HUD, forest sky, and loading screen polish. Choose **Map creator** from Main while offline. Place/edit five types of objects, undo/redo changes, save/load six slots, and playtest with normal movement. Desktop has a fly camera and numeric inspector; headset controls use a paged aim/trigger panel. **F8 / right B** returns from playtest. Custom maps stay on the device and do not join multiplayer rooms. [Map creator controls](../quest-native/README.md#map-creator).
+The build includes a local map creator, clearer menus, a new desktop HUD, forest sky, and loading screen polish. Choose **Map creator** from Main while offline. Place/edit five types of objects, undo/redo changes, save/load six slots, and playtest with normal movement. Desktop has a fly camera and numeric inspector; headset controls use a paged aim/trigger panel. **F8 / right B** returns from playtest. Custom maps stay on the device and do not join multiplayer rooms. [Map creator controls](../quest-native/README.md#map-creator).
 
 ## Accounts and profiles
 
@@ -57,7 +59,7 @@ The owner approves selected PlayFab IDs through title **1A7D9B**'s `PrimalMonkeD
 
 ## Play with Quest
 
-Use the matching **0.7.0** [Quest APK](../apk/README.md). Unity 2021.3.21f1 and WebXR remain separate single-player projects.
+Use the matching **0.7.1** [Quest APK](../apk/README.md). Unity 2021.3.21f1 and WebXR remain separate single-player projects.
 
 1. Connect PC and Quest to the same local network, then choose **Multiplayer lobby**.
 2. One device chooses **Host** and shares the local IPv4 address shown in its lobby. Other players enter it and choose **Join**.

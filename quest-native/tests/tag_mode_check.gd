@@ -94,6 +94,23 @@ func run() -> void:
 	check(game.session.complete_loading() and game.session.phase == "playing", "host completes a player tag round")
 	check(not game.session.set_game_mode("co_op"), "mode cannot change while a round is playing")
 	check(game.session.tagger_id == 1 and game.session.tag_transfers == 0, "new round deterministically selects the host and clears tag totals")
+	# A standing avatar's longer arms must remain usable for tags while
+	# malformed or overlong poses are rejected on both hands.
+	for vr in [false, true]:
+		var reach: float = SessionScript.MAX_VR_HAND_DISTANCE if vr else SessionScript.MAX_DESKTOP_HAND_DISTANCE
+		for side in ["left", "right"]:
+			var bounded := pose(Vector3.ZERO, vr)
+			bounded[side] = bounded.head + Vector3.DOWN * (reach - 0.001)
+			check(game.session._usable_tag_pose(bounded), "%s %s hand at bounded reach is accepted" % ["VR" if vr else "desktop", side])
+			bounded[side] = bounded.head + Vector3.DOWN * (reach + 0.001)
+			check(not game.session._usable_tag_pose(bounded), "%s %s hand beyond reach is rejected" % ["VR" if vr else "desktop", side])
+	var standing := pose(Vector3.ZERO, true)
+	standing.head.y = 1.80
+	standing.left = Vector3(-0.2, 0.09, 0)
+	standing.right = Vector3(0.2, 0.09, 0)
+	check(game.session._usable_tag_pose(standing), "standing virtual hands touching the floor remain usable in crossplay")
+	standing.vr = false
+	check(not game.session._usable_tag_pose(standing), "longer VR arm reach does not expand desktop poses")
 
 	configure_poses(pose(Vector3.ZERO, false, true), pose(Vector3(7, 0, 0)))
 	game.session._advance_player_tags()

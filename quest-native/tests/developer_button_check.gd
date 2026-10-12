@@ -154,8 +154,16 @@ func run() -> void:
 	account.provider_id = DEV_ID
 	account.title_data = {"PMDID": JSON.stringify([DEV_ID])}
 	await account.login_device()
-	check(account.account_id == DEV_ID and not account.is_developer() and not is_instance_valid(game.dev_menu), "matching account ID with an unrecognized PMDID title key does not unlock tools")
-	check_button_access(game, false, "Unrecognized title key")
+	await settle()
+	check(account.account_id == DEV_ID and account.is_developer() and is_instance_valid(game.dev_menu), "verified selected account under PMDID opens the private developer menu")
+	check_button_access(game, true, "Verified PMDID developer")
+	game.main_menu._desktop_buttons.developer.pressed.emit()
+	check_exclusive_developer(game, "Legacy PMDID Main button")
+	account.title_data = {"PrimalMonkeDeveloperIds": "[]", "PMDID": JSON.stringify([DEV_ID])}
+	await account.refresh_permissions()
+	await settle()
+	check(not account.is_developer() and not is_instance_valid(game.dev_menu), "canonical revocation closes a legacy-opened developer menu despite stale PMDID")
+	check_button_access(game, false, "Canonical revocation over legacy list")
 	account.title_data = {"PrimalMonkeDeveloperIds": JSON.stringify([DEV_ID])}
 	await account.refresh_permissions()
 	await settle()
@@ -163,7 +171,7 @@ func run() -> void:
 	var requested_role := false
 	for call in account.calls:
 		if call.api == "GetTitleData":
-			requested_role = requested_role or (call.payload == {"Keys": ["PrimalMonkeDeveloperIds"]} and call.ticket == TEST_TICKET)
+			requested_role = requested_role or (call.payload == {"Keys": ["PrimalMonkeDeveloperIds", "PMDID"]} and call.ticket == TEST_TICKET)
 	check(requested_role, "developer-button access comes from the existing authenticated developer-list request")
 	check_button_access(game, true, "Verified developer")
 	game.main_menu._desktop_buttons.developer.pressed.emit()

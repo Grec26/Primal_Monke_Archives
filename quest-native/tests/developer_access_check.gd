@@ -48,7 +48,8 @@ class StorageAccount:
 		return {"ok": false}
 
 func _initialize() -> void:
-	call_deferred("private_response_probe" if OS.get_cmdline_user_args().has("--privacy-probe") else "run")
+	var private_probe := OS.get_cmdline_user_args().has("--privacy-probe") or OS.get_cmdline_user_args().has("--role-privacy-probe")
+	call_deferred("private_response_probe" if private_probe else "run")
 
 func check(condition: bool, label: String) -> void:
 	if condition: print("PASS: " + label)
@@ -68,6 +69,9 @@ func proof(id: String, username := "") -> Dictionary:
 
 func permissions(raw: Variant) -> Dictionary:
 	return {"ok": true, "data": {"Data": {"PrimalMonkeDeveloperIds": raw}}}
+
+func title_permissions(data: Variant) -> Dictionary:
+	return {"ok": true, "data": {"Data": data}}
 
 func login_replies(id: String, raw: Variant) -> Array[Dictionary]:
 	return [
@@ -99,6 +103,7 @@ func wait_blocked(account: MockAccount) -> void:
 
 func run() -> void:
 	await test_identity_and_role_proof()
+	await test_legacy_developer_key()
 	await test_private_identity_storage()
 	test_account_validation()
 	await test_provider_response_handling()
@@ -116,6 +121,12 @@ func run() -> void:
 
 func private_response_probe() -> void:
 	var account := fresh_account()
+	if OS.get_cmdline_user_args().has("--role-privacy-probe"):
+		account.replies = login_replies(DEV_ID, "[]")
+		account.replies[2] = title_permissions({"PMDID": "[" + PRIVATE_RESPONSE_MARKER + "]"})
+		await account.login_device()
+		quit(0 if account.is_signed_in() and not account.is_developer() and account.status.contains("invalid developer list") else 1)
+		return
 	var malformed := ("{\"errorMessage\": " + PRIVATE_RESPONSE_MARKER + "}").to_utf8_buffer()
 	var reply: Dictionary = account._decode_response(HTTPRequest.RESULT_SUCCESS, 200, malformed)
 	quit(0 if reply == {"ok": false, "error": "InvalidResponse"} else 1)
@@ -123,10 +134,11 @@ func private_response_probe() -> void:
 func test_private_response_logging() -> void:
 	# An isolated process lets this test inspect stdout and stderr without ever
 	# echoing the potentially private response token into the parent test log.
-	var output: Array = []
-	var arguments := PackedStringArray(["--headless", "--xr-mode", "off", "--path", ProjectSettings.globalize_path("res://"), "--script", "res://tests/developer_access_check.gd", "--", "--privacy-probe"])
-	var exit_code := OS.execute(OS.get_executable_path(), arguments, output, true)
-	check(exit_code == 0 and not "\n".join(output).contains(PRIVATE_RESPONSE_MARKER), "malformed provider response is rejected without logging its private token to stdout or stderr")
+	for probe in ["--privacy-probe", "--role-privacy-probe"]:
+		var output: Array = []
+		var arguments := PackedStringArray(["--headless", "--xr-mode", "off", "--path", ProjectSettings.globalize_path("res://"), "--script", "res://tests/developer_access_check.gd", "--", probe])
+		var exit_code := OS.execute(OS.get_executable_path(), arguments, output, true)
+		check(exit_code == 0 and not "\n".join(output).contains(PRIVATE_RESPONSE_MARKER), "malformed provider response or role configuration is rejected without logging private content: " + probe)
 
 func test_verified_usernames() -> void:
 	var account := fresh_account()
@@ -505,7 +517,7 @@ func test_identity_and_role_proof() -> void:
 	check(account.calls.size() == 3 and account.calls[0].api == "LoginWithCustomID" and account.calls[1].api == "GetAccountInfo" and account.calls[2].api == "GetTitleData", "automatic device login verifies ticket ownership before loading role")
 	check(account.calls[0].payload == {"TitleId": "1A7D9B", "CustomId": TEST_IDENTITY, "CreateAccount": true}, "device login sends a private generated credential rather than a claimed public account ID")
 	check(account.calls[1].payload.is_empty() and account.calls[1].ticket == TEST_TICKET, "account proof requests authenticated ticket owner with no lookup identifier")
-	check(account.calls[2].payload == {"Keys": ["PrimalMonkeDeveloperIds"]} and account.calls[2].ticket == TEST_TICKET, "role check reads only intended title-owned data key")
+	check(account.calls[2].payload == {"Keys": ["PrimalMonkeDeveloperIds", "PMDID"]} and account.calls[2].ticket == TEST_TICKET, "role check reads only canonical and legacy title-owned data keys")
 	check(not account.status.contains(TEST_TICKET) and not account.status.contains(TEST_IDENTITY), "account status exposes neither ticket nor device credential")
 	account._access_until_ms = Time.get_ticks_msec() - 1
 	check(not account.is_developer(), "expired role lease is rejected immediately without waiting for process callback")
@@ -525,6 +537,60 @@ func test_identity_and_role_proof() -> void:
 	check(not account.is_signed_in() and not account.is_developer(), "changed ticket owner on refresh invalidates account and role")
 	account.sign_out()
 	check(account.account_id.is_empty() and account._ticket.is_empty() and not account.busy and not account.is_developer(), "sign-out clears account, session ticket and privileged lease")
+	account.queue_free()
+	await process_frame
+
+func test_legacy_developer_key() -> void:
+	var account := fresh_account()
+	var legacy_data := {"PMDID": JSON.stringify([" " + DEV_ID.to_lower() + " "])}
+	account.replies = login_replies(DEV_ID, "[]")
+	account.replies[2] = title_permissions(legacy_data)
+	await account.login_device()
+	check(account.is_signed_in() and account.is_developer() and account.status.contains("PMDID"), "legacy PMDID string array grants only the freshly verified selected account")
+	check(account.calls[2].payload == {"Keys": ["PrimalMonkeDeveloperIds", "PMDID"]} and account.calls[2].ticket == TEST_TICKET, "legacy permission compatibility uses one authenticated two-key server read")
+	for canonical in ["[]", "", "{}", JSON.stringify([PLAYER_ID]), JSON.stringify([DEV_ID, 42]), null, [DEV_ID]]:
+		account.replies = [proof(DEV_ID), title_permissions({"PrimalMonkeDeveloperIds": canonical, "PMDID": JSON.stringify([DEV_ID])})]
+		await account.refresh_permissions()
+		check(account.is_signed_in() and not account.is_developer(), "canonical exclusion or invalid configuration cannot fall back to a stale legacy grant")
+	account.replies = [proof(DEV_ID), title_permissions({"PrimalMonkeDeveloperIds": JSON.stringify([DEV_ID]), "PMDID": "[]"})]
+	await account.refresh_permissions()
+	check(account.is_developer() and not account.status.contains("PMDID"), "canonical selected account remains authoritative over legacy exclusion")
+	account.replies = [proof(DEV_ID), title_permissions(legacy_data)]
+	await account.refresh_permissions()
+	check(account.is_developer(), "explicit refresh can renew the verified legacy role")
+	account.replies = [proof(DEV_ID), title_permissions({"PMDID": "[]"})]
+	await account.refresh_permissions()
+	check(not account.is_developer() and account.is_signed_in(), "legacy list revocation clears an existing developer lease")
+	for malformed in ["", "{}", JSON.stringify(DEV_ID), JSON.stringify([DEV_ID, 42]), [DEV_ID], true, "not-json"]:
+		account.replies = [proof(DEV_ID), title_permissions({"PMDID": malformed})]
+		await account.refresh_permissions()
+		check(account.is_signed_in() and not account.is_developer() and account.status.contains("invalid developer list"), "malformed legacy role remains locked and explains the configuration failure")
+	for missing in [{}, {"pmdid": JSON.stringify([DEV_ID])}, [], null]:
+		account.replies = [proof(DEV_ID), title_permissions(missing)]
+		await account.refresh_permissions()
+		check(not account.is_developer() and account.status.contains("developer list missing"), "missing exact server key is diagnosed without granting access")
+	account.replies = [proof(DEV_ID), {"ok": false, "error": "APINotEnabledForGameClientAccess"}]
+	await account.refresh_permissions()
+	check(account.is_signed_in() and not account.is_developer() and account.error_code == "PF-1082" and account.status.contains("[PF-1082]"), "failed developer Title Data API retains player sign-in and displays the official bounded diagnostic")
+	account.replies = login_replies(PLAYER_ID, "[]")
+	account.replies[2] = title_permissions(legacy_data)
+	await account.login_device()
+	check(account.is_signed_in() and not account.is_developer(), "legacy selected account list cannot grant a different authenticated account")
+	account.replies = login_replies(DEV_ID, "[]")
+	account.replies[1] = proof(PLAYER_ID)
+	account.replies[2] = title_permissions(legacy_data)
+	account.calls.clear()
+	await account.login_device()
+	check(not account.is_signed_in() and not account.is_developer() and account.calls.size() == 2, "legacy role cannot override mismatched authenticated account proof")
+	account.replies = login_replies(DEV_ID, "[]")
+	account.replies[2] = title_permissions(legacy_data)
+	account.suspend_api = "GetTitleData"
+	account.login_device()
+	await wait_blocked(account)
+	account.sign_out()
+	account.release_reply.emit()
+	await settle()
+	check(not account.is_signed_in() and not account.is_developer(), "late legacy grant cannot restore access after logout")
 	account.queue_free()
 	await process_frame
 

@@ -132,6 +132,16 @@ func run_host() -> void:
 	write_signal("baseline", {"remaining": game.remaining, "round": game.session.round_id})
 	await wait_signal("client1-baseline")
 	await wait_signal("client2-baseline")
+	write_signal("standing-hands")
+	var vr_id := int(read_signal("client2-ready").get("id", 0))
+	await wait_for(func():
+		var current: Dictionary = game.session.members.get(vr_id, {})
+		return current.has("left") and current.left.distance_to(current.head) > 1.65 and game.session._usable_tag_pose(current),
+		"host accepts standing VR floor-reach hands over ENet")
+	write_signal("standing-hands-accepted")
+	await wait_signal("client1-standing-hands")
+	await wait_signal("client2-standing-hands")
+	write_signal("standing-hands-done")
 
 	# Mock a current developer lease without invoking account/provider traffic.
 	# The real developer handler, game physics and ENet snapshots remain live.
@@ -253,6 +263,21 @@ func run_client() -> void:
 	if role == "client1": check(game.session.avatars.values().any(func(avatar): return avatar.target.get("vr", false)), "desktop client renders a VR participant avatar")
 	else: check(game.session.avatars.values().all(func(avatar): return not avatar.target.get("vr", false)), "VR client renders both desktop participant avatars")
 	write_signal(role + "-baseline")
+	await wait_signal("standing-hands")
+	if role == "client2":
+		game.player.head.position.y = 1.8
+		for index in range(2):
+			game.player.hand_visuals[index].global_position = game.player.global_position + Vector3(-0.2 if index == 0 else 0.2, 0.09, 0)
+	else:
+		await wait_for(func():
+			return game.session.avatars.values().any(func(avatar):
+				var current: Dictionary = avatar.target
+				return current.get("vr", false) and current.has("left") and current.left.distance_to(current.head) > 1.65),
+			"desktop receives standing VR floor-reach hands in snapshots")
+	await wait_signal("standing-hands-accepted")
+	write_signal(role + "-standing-hands")
+	await wait_signal("standing-hands-done")
+	park_player(Vector3(-10, 0.1, -5))
 
 	await wait_signal("developer-paused")
 	await wait_for(func(): return game.developer_round_paused, "client receives host pause through the actual ENet snapshot")
